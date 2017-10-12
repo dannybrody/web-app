@@ -8,10 +8,6 @@ Parameters:
         Description: An environment name that will be prefixed to resource names
         Type: String
 
-    VPC:
-        Type: AWS::EC2::VPC::Id
-        Description: Choose which VPC the Applicaion Load Balancer should be deployed to
-
     Subnets:
         Description: Choose which subnets the Applicaion Load Balancer should be deployed to
         Type: List<AWS::EC2::Subnet::Id>
@@ -21,83 +17,71 @@ Parameters:
         Type: AWS::EC2::SecurityGroup::Id
 
     DomainName:
-        Description: Fully qualified domain name (FQDN) of the site that you want to secure with the ACM certificate
+        Description: Fully qualified domain name (FQDN) of your site
         Type: String
+
+    SubDomainName:
+        Description: Sub domain you want the load balancer to listen on
+        Type: String
+
+    Certificate:
+        Description: Fully qualified domain name (FQDN) of the site that you want to secure with the ACM certificate
+        Type: String  
 
 Resources:
 
-    LoadBalancerRecordSet:
-        Type: AWS::Route53::RecordSet
-        Properties:
-          HostedZoneName: !Join [ "", [ !Ref DomainName , "." ] ]
-          Name:  !Join [ "", [ !Ref DomainName , "." ] ]
+    myDNS:
+      Type: AWS::Route53::RecordSetGroup
+      Properties:
+        HostedZoneName: !Join [ ".", [ !Ref DomainName, "" ] ]
+        RecordSets:
+        - Name: !Join [ ".", [ !Ref SubDomainName, !Ref DomainName, "" ] ]
           Type: A
           AliasTarget:
-            EvaluateTargetHealth: false
-            HostedZoneId: !GetAtt LoadBalancer.CanonicalHostedZoneID
+            HostedZoneId: !GetAtt LoadBalancer.CanonicalHostedZoneNameID
             DNSName: !GetAtt LoadBalancer.DNSName
-        DependsOn:
-          - LoadBalancer
-
-
-    LoadBalancerCertificate:
-        Type: AWS::CertificateManager::Certificate
-        Properties:
-            DomainName: !Join [ ".", [ "*", !Ref DomainName ] ]
-
 
     LoadBalancer:
-        Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-        DependsOn: LoadBalancerCertificate
+        Type: AWS::ElasticLoadBalancing::LoadBalancer
         Properties:
-            Name: !Ref EnvironmentName
+            LoadBalancerName: !Sub ${EnvironmentName}-Jenkins-ELB
+            CrossZone: true
             Subnets: !Ref Subnets
+            Scheme: internet-facing
             SecurityGroups: 
                 - !Ref SecurityGroup
             Tags: 
                 - Key: Name
                   Value: !Ref EnvironmentName
+            Listeners:
+                - LoadBalancerPort: 80
+                  InstancePort: 8080
+                  Protocol: HTTP
+                - InstancePort: 8080
+                  SSLCertificateId: !Ref Certificate
+                  LoadBalancerPort: 443
+                  Protocol: HTTPS
+                  InstanceProtocol: HTTP
+            HealthCheck:
+                Target: HTTP:8080/login
+                HealthyThreshold: '3'
+                UnhealthyThreshold: '5'
+                Interval: '30'
+                Timeout: '5'
+                HealthyThreshold: '3'
+                UnhealthyThreshold: '5'
+                Interval: '30'
+                Timeout: '5'
+            ConnectionDrainingPolicy:
+                Enabled: 'true'
+                Timeout: '60'
 
-    LoadBalancerListener:
-        Type: AWS::ElasticLoadBalancingV2::Listener
-        DependsOn: LoadBalancer
-        Properties:
-            LoadBalancerArn: !Ref LoadBalancer
-            Certificates:
-                - CertificateArn: !Ref LoadBalancerCertificate
-            Port: 443
-            Protocol: HTTPS
-            DefaultActions: 
-                - Type: forward
-                  TargetGroupArn: !Ref DefaultTargetGroup
-    
-    # We define a default target group here, as this is a mandatory Parameters
-    # when creating an Application Load Balancer Listener. This is not used, instead
-    # a target group is created per-service in each service template (../services/*)
-    DefaultTargetGroup:
-        Type: AWS::ElasticLoadBalancingV2::TargetGroup
-        Properties:
-            Name: default
-            VpcId: !Ref VPC
-            Port: 80
-            Protocol: HTTP
-            TargetGroupAttributes:
-            - Key: deregistration_delay.timeout_seconds
-              Value: '60'
-           
 Outputs:
 
-    LoadBalancerCertificate:
-        Description: A reference to the SSL Certficate
-        Value: !Ref LoadBalancerCertificate        
     LoadBalancer:
-        Description: A reference to the Application Load Balancer
+        Description: A reference to the Jenkins ELB
         Value: !Ref LoadBalancer
 
     LoadBalancerUrl:
-        Description: The URL of the ALB
+        Description: The URL of the Jenkins ELB
         Value: !GetAtt LoadBalancer.DNSName
-
-    Listener:
-        Description: A reference to a port 443 listener
-        Value: !Ref LoadBalancerListener  

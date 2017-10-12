@@ -9,9 +9,14 @@ Parameters:
     DomainName:
         Description: Fully qualified domain name (FQDN) of the site that you want to secure with the ACM certificate
         Type: String
+
     KeyName:
         Description: Fully qualified domain name (FQDN) of the site that you want to secure with the ACM certificate
         Type: String
+
+    Certificate:
+        Description: Fully qualified domain name (FQDN) of the site that you want to secure with the ACM certificate
+        Type: String        
 
 Resources:
 
@@ -30,16 +35,17 @@ Resources:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
 
-    ALB:
+    JenkinsELB:
         Type: AWS::CloudFormation::Stack
         Properties:
             TemplateURL: https://s3.amazonaws.com/acrdevelopment/danny/web-app/load-balancers.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
-                VPC: !GetAtt VPC.Outputs.VPC
                 Subnets: !GetAtt VPC.Outputs.PublicSubnets
-                SecurityGroup: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup
+                SecurityGroup: !GetAtt SecurityGroups.Outputs.JenkinsELBSG
+                Certificate: !Ref Certificate
                 DomainName: !Ref DomainName
+                SubDomainName: jenkins
 
     JenkinsCI:
         Type: AWS::CloudFormation::Stack
@@ -50,6 +56,6 @@ Resources:
                 # Subnets: !GetAtt VPC.Outputs.PrivateSubnets
                 Subnets: !GetAtt VPC.Outputs.PublicSubnets
                 VPC: !GetAtt VPC.Outputs.VPC
-                Listener: !GetAtt ALB.Outputs.Listener
+                LoadBalancerNames: !GetAtt JenkinsELB.Outputs.LoadBalancer
                 JenkinsSecurityGroup: !GetAtt SecurityGroups.Outputs.JenkinsSecurityGroup
                 KeyName: !Ref KeyName

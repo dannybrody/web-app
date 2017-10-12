@@ -17,12 +17,7 @@ Parameters:
   Subnets:
     Type: List<AWS::EC2::Subnet::Id>
 
-  Path: 
-    Description: The path to register with the Application Load Balancer
-    Type: String
-    Default: /jenkins
-
-  Listener:
+  LoadBalancerNames:
     Description: The Application Load Balancer listener to register with
     Type: String
 
@@ -64,92 +59,39 @@ Mappings:
 
 Resources:
 
-  TargetGroup:
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+  JenkinsRole:
+    Type: AWS::IAM::Role
     Properties:
-      VpcId: !Ref VPC
-      Port: 80
-      Protocol: HTTP
-      Matcher: 
-        HttpCode: 200-299
-      HealthCheckIntervalSeconds: 10
-      HealthCheckPath: /login
-      HealthCheckProtocol: HTTP
-      HealthCheckTimeoutSeconds: 5
-      HealthyThresholdCount: 2
-      Name: !Sub ${EnvironmentName}-JenkinsCi
+      Path: /
+      AssumeRolePolicyDocument: |
+        {
+            "Statement": [{
+                "Effect": "Allow",
+                "Principal": { "Service": [ "ec2.amazonaws.com" ]},
+                "Action": [ "sts:AssumeRole" ]
+            }]
+        }
+      Policies: 
+          - PolicyName: !Sub ${EnvironmentName}-Jenkins-Policy
+            PolicyDocument: 
+              {
+                  "Version": "2012-10-17",
+                  "Statement": [{
+                          "Effect": "Allow",
+                          "Action": [
+                              "ec2:DescribeTags"
+                          ],
+                          "Resource": "*"
+                  }]
+              }
+      RoleName: !Sub ${EnvironmentName}-Jenkins-Role
 
-  ListenerRule:
-      Type: AWS::ElasticLoadBalancingV2::ListenerRule
-      Properties:
-        ListenerArn: !Ref Listener
-        Priority: 3
-        Conditions:
-          - Field: path-pattern
-            Values: 
-              - !Ref Path
-        Actions:
-          - TargetGroupArn: !Ref TargetGroup
-            Type: forward
-
-
-    # ServiceRole: 
-    #     Type: AWS::IAM::Role
-    #     Properties: 
-    #         RoleName: !Sub ecs-service-${AWS::StackName}
-    #         Path: /
-    #         AssumeRolePolicyDocument: |
-    #             {
-    #                 "Statement": [{
-    #                     "Effect": "Allow",
-    #                     "Principal": { "Service": [ "ecs.amazonaws.com" ]},
-    #                     "Action": [ "sts:AssumeRole" ]
-    #                 }]
-    #             }
-    #         Policies: 
-    #             - PolicyName: !Sub ecs-service-${AWS::StackName}
-    #               PolicyDocument: 
-    #                 {
-    #                     "Version": "2012-10-17",
-    #                     "Statement": [{
-    #                             "Effect": "Allow",
-    #                             "Action": [
-    #                                 "ec2:AuthorizeSecurityGroupIngress",
-    #                                 "ec2:Describe*",
-    #                                 "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
-    #                                 "elasticloadbalancing:Describe*",
-    #                                 "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
-    #                                 "elasticloadbalancing:DeregisterTargets",
-    #                                 "elasticloadbalancing:DescribeTargetGroups",
-    #                                 "elasticloadbalancing:DescribeTargetHealth",
-    #                                 "elasticloadbalancing:RegisterTargets"
-    #                             ],
-    #                             "Resource": "*"
-    #                     }]
-    #                 }
-
-
-  # JenkinsRole:
-  #   Type: AWS::IAM::Role
-  #   Properties:
-  #     Path: /
-  #     AssumeRolePolicyDocument: |
-  #       {
-  #           "Statement": [{
-  #               "Effect": "Allow",
-  #               "Principal": { "Service": [ "ec2.amazonaws.com" ]},
-  #               "Action": [ "sts:AssumeRole" ]
-  #           }]
-  #       }
-  #     ManagedPolicyArns:
-  #       - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
-
-  # InstanceProfile:
-  #   Type: AWS::IAM::InstanceProfile
-  #   Properties:
-  #     Path: /
-  #     Roles:
-  #       - !Ref JenkinsRole
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref JenkinsRole
 
   JenkinsEFS:
     Type: AWS::EFS::FileSystem
@@ -203,8 +145,8 @@ Resources:
   AutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
-      TargetGroupARNs : 
-       - !Ref TargetGroup
+      LoadBalancerNames : 
+       - !Ref LoadBalancerNames
       VPCZoneIdentifier: !Ref Subnets
       LaunchConfigurationName: !Ref LaunchConfiguration
       MinSize: !Ref ClusterSize
@@ -233,7 +175,7 @@ Resources:
       ImageId: !FindInMap [ AWSRegionToAMI, !Ref "AWS::Region", AMI ]
       InstanceType: !Ref InstanceType
       KeyName: !Ref KeyName
-      # IamInstanceProfile: !Ref InstanceProfile
+      IamInstanceProfile: !Ref InstanceProfile
       SecurityGroups:
         - !Ref JenkinsSecurityGroup
       UserData:
@@ -246,17 +188,38 @@ Resources:
           wget -q -O - https://pkg.jenkins.io/debian/jenkins-ci.org.key | sudo apt-key add -
           echo deb http://pkg.jenkins.io/debian-stable binary/ | sudo tee /etc/apt/sources.list.d/jenkins.list
           apt-get update -y
-          apt-get install -y python-setuptools nfs-common
+          apt-get install -y python-setuptools nfs-common python-pip awscli
           mkdir /var/lib/jenkins
-          #mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 fs-6465895d.efs.ap-southeast-2.amazonaws.com:/ /var/lib/jenkins
-          #apt-get install nginx jenkins -y
-          #rm /etc/nginx/sites-available/default
+          #####   MOUNT EFS VOLUME FOR JEKNINS #####
+          INSTANCE_ID="`wget -qO- http://instance-data/latest/meta-data/instance-id`"
+          REGION="`wget -qO- http://instance-data/latest/meta-data/placement/availability-zone | sed -e 's:\([0-9][0-9]*\)[a-z]*\$:\\1:'`"
+          TAG_NAME="Efs"
+          EFS_ID="`aws --region $REGION ec2 describe-tags --filters "Name=resource-id,Values=$INSTANCE_ID" "Name=key,Values=$TAG_NAME" --output=text | cut -f5`"
+          mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 $EFS_ID.efs.$REGION.amazonaws.com:/ /var/lib/jenkins
 
+          apt-get install jenkins -y
+          
           easy_install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz
           /usr/local/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource AutoScalingGroup
+
+
+
 
 # Outputs:
 #   KeyId:
 #     Value: !GetAtt 
 #       - key
 #       - Arn
+
+# https://serverfault.com/questions/774510/jenkins-2-x-disable-initial-admin-setup
+# https://groups.google.com/forum/#!msg/jenkinsci-users/Pb4QZVc2-f0/JKUtQ_Y1NgAJ
+# Found a solution for this issue.  In previous releases, I had set this flag via JENKINS_JAVA_OPTIONS in /etc/default/jenkins.  If I move that same flag from JENKINS_JAVA_OPTIONS to JAVA_ARGS in /etc/default/jenkins, it works as expected.
+
+### INSTALL GO
+# curl -qO https://storage.googleapis.com/golang/go1.8.linux-amd64.tar.gz
+# tar -xvf go1.8.linux-amd64.tar.gz
+# sudo mv go /usr/local
+# rm go1.8.linux-amd64.tar.gz
+# cat ~/.profile
+# echo 'export PATH=$PATH:/usr/local/go/bin' | tee -a ~/.profile
+# source ~/.profile

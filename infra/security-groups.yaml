@@ -15,53 +15,53 @@ Parameters:
 
 Resources:
 
-    LoadBalancerSecurityGroup:
-        Type: AWS::EC2::SecurityGroup
-        Properties: 
-            VpcId: !Ref VPC
-            GroupDescription: Access to the public load balancer
-            SecurityGroupIngress:
-                - CidrIp: 0.0.0.0/0
-                  IpProtocol: tcp
-                  FromPort: '443'
-                  ToPort: '443'
-            Tags: 
-                - Key: Name
-                  Value: !Sub ${EnvironmentName}-LoadBalancers
+    JenkinsELBSG:
+      Type: AWS::EC2::SecurityGroup
+      Properties: 
+        VpcId: !Ref VPC
+        GroupDescription: Access to the public load balancer
+        SecurityGroupIngress:
+          - CidrIp: 0.0.0.0/0
+            IpProtocol: tcp
+            FromPort: '443'
+            ToPort: '443'
+        Tags: 
+          - Key: Name
+            Value: !Sub ${EnvironmentName}-Jenkins-ELB
 
     JenkinsSecurityGroup:
-        Type: "AWS::EC2::SecurityGroup"
-        Properties:
-            GroupDescription: Jenkins
-            SecurityGroupIngress:
-            - SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
-              IpProtocol: tcp
-              FromPort: 80
-              ToPort: 80
-            - CidrIp: 0.0.0.0/0
-              IpProtocol: tcp
-              FromPort: '22'
-              ToPort: '22'
-            VpcId: !Ref VPC
-            Tags: 
-                - Key: Name
-                  Value: !Sub ${EnvironmentName}-Jenkins
+      Type: "AWS::EC2::SecurityGroup"
+      Properties:
+        GroupDescription: Jenkins
+        SecurityGroupIngress:
+        - SourceSecurityGroupId: !Ref JenkinsELBSG
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+        - CidrIp: 162.246.216.28/32
+          IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+        VpcId: !Ref VPC
+        Tags: 
+          - Key: Name
+            Value: !Sub ${EnvironmentName}-Jenkins
 
     EFSIngressRule:
-        Type: AWS::EC2::SecurityGroupIngress
-        Properties:
-            FromPort: 2049
-            GroupId: !Sub ${JenkinsSecurityGroup}
-            IpProtocol: tcp
-            SourceSecurityGroupId: !Sub ${JenkinsSecurityGroup}
-            ToPort: 2049
+      Type: AWS::EC2::SecurityGroupIngress
+      Properties:
+        FromPort: 2049
+        GroupId: !Sub ${JenkinsSecurityGroup}
+        IpProtocol: tcp
+        SourceSecurityGroupId: !Sub ${JenkinsSecurityGroup}
+        ToPort: 2049
 
 Outputs:
 
-    LoadBalancerSecurityGroup:
-        Description: A reference to the security group for load balancers
-        Value: !Ref LoadBalancerSecurityGroup
+    JenkinsELBSG:
+      Description: A reference to the security group for load balancers
+      Value: !Ref JenkinsELBSG
 
     JenkinsSecurityGroup:
-        Description: A reference to the security group for jenkins
-        Value: !Ref JenkinsSecurityGroup
+      Description: A reference to the security group for jenkins
+      Value: !Ref JenkinsSecurityGroup

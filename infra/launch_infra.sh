@@ -23,6 +23,29 @@ if [ "$EXISTS" != "$DOMAIN" ];then
 	exit
 fi
 
+
+#Create SSL Certificate for site if it does not exist
+EXISTS=$(aws acm list-certificates \
+	--query "CertificateSummaryList[?DomainName==\`"*."$DOMAIN\`].DomainName" \
+	--output text)
+
+if [ "$EXISTS" != "*.${DOMAIN}" ];then
+	echo "creating certificate for $DOMAIN"
+	RESULT=$(aws acm request-certificate --domain-name "*.${DOMAIN}" --output text)
+	echo "check your email: $Email and agree to certificate creation"
+fi
+
+CERTIFICATE_ARN=$(aws acm list-certificates \
+	--query "CertificateSummaryList[?DomainName==\`"*."$DOMAIN\`].CertificateArn" \
+	--output text)
+echo $CERTIFICATE_ARN
+# exit
+# $(aws acm --region us-east-1 list-certificates)
+	# --domain-name $DOMAIN\
+	# --query "Domains[?DomainName==\`$DOMAIN\`].DomainName" \
+	# --output text)
+
+
 #Sync all templates to s3 for provisioning
 echo "syncing templates to s3"
 for TEMPLATE in *.yaml; do
@@ -46,23 +69,24 @@ if [ $? -eq 0 ]; then
 		--template-url https://s3.amazonaws.com/${TEMPLATE_S3_DIR}master.yaml \
 		--parameters \
 			ParameterKey=DomainName,ParameterValue=${DOMAIN} \
-			ParameterKey=KeyName,ParameterValue=${STACK})
+			ParameterKey=KeyName,ParameterValue=${STACK} \
+			ParameterKey=Certificate,ParameterValue=${CERTIFICATE_ARN})
 else
-	echo "check your email: $Email and agree to certificate creation while stack is in progress"
 	RESULT=$(aws cloudformation create-stack \
 		--stack-name $STACK \
 		--capabilities CAPABILITY_NAMED_IAM \
 		--template-url https://s3.amazonaws.com/${TEMPLATE_S3_DIR}master.yaml \
 		--parameters \
 			ParameterKey=DomainName,ParameterValue=${DOMAIN} \
-			ParameterKey=KeyName,ParameterValue=${STACK})
+			ParameterKey=KeyName,ParameterValue=${STACK} \
+			ParameterKey=Certificate,ParameterValue=${CERTIFICATE_ARN})
 fi
 
 #Wait for result
 while true; do
 	STATUS=$(aws cloudformation \
 		describe-stacks --stack-name $STACK | jq .Stacks[0].StackStatus | tr -d \")
-	if [ "$STATUS" == "CREATE_COMPLETE" ] || [ "$STATUS" == "UPDATE_COMPLETE" ] || [ "$STATUS" == "UPDATE_ROLLBACK_COMPLETE" ];then
+	if [ "$STATUS" == "CREATE_COMPLETE" ] || [ "$STATUS" == "UPDATE_COMPLETE" ];then
 		echo $STATUS
 		break
 	elif [ "$STATUS" == "UPDATE_ROLLBACK_COMPLETE" ];then
