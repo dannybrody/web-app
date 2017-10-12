@@ -1,11 +1,11 @@
-#!/bin/bash -e
+#!/bin/bash
 
-EXISTS=$(which jq 2>>/dev/null)
+EXISTS=$(which jq)
 if [ $? -ne 0 ]; then
 	echo "you must have jq installed on your system"
 	exit
 fi
-EXISTS=$(which aws 2>>/dev/null)
+EXISTS=$(which aws)
 if [ $? -ne 0 ]; then
 	echo "you must have aws installed on your system"
 	exit
@@ -29,9 +29,8 @@ for TEMPLATE in *.yaml; do
     [ -f "$TEMPLATE" ] || break
     aws s3 cp $TEMPLATE s3://${TEMPLATE_S3_DIR}${TEMPLATE}
 done
-
 #Create keypair if it doesnt exist
-EXISTS=$(aws ec2 describe-key-pairs --key-name $STACK 2>>/dev/null)
+EXISTS=$(aws ec2 describe-key-pairs --key-name $STACK)
 if [ $? -ne 0 ]; then
 	echo "creating keypair"
 	aws ec2 create-key-pair --key-name $STACK --query 'KeyMaterial' --output text > $STACK.pem
@@ -46,7 +45,8 @@ if [ $? -eq 0 ]; then
 		--capabilities CAPABILITY_NAMED_IAM \
 		--template-url https://s3.amazonaws.com/${TEMPLATE_S3_DIR}master.yaml \
 		--parameters \
-			ParameterKey=DomainName,ParameterValue=${DOMAIN})
+			ParameterKey=DomainName,ParameterValue=${DOMAIN} \
+			ParameterKey=KeyName,ParameterValue=${STACK})
 else
 	echo "check your email: $Email and agree to certificate creation while stack is in progress"
 	RESULT=$(aws cloudformation create-stack \
@@ -54,7 +54,8 @@ else
 		--capabilities CAPABILITY_NAMED_IAM \
 		--template-url https://s3.amazonaws.com/${TEMPLATE_S3_DIR}master.yaml \
 		--parameters \
-			ParameterKey=DomainName,ParameterValue=${DOMAIN})
+			ParameterKey=DomainName,ParameterValue=${DOMAIN} \
+			ParameterKey=KeyName,ParameterValue=${STACK})
 fi
 
 #Wait for result

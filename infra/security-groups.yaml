@@ -19,9 +19,8 @@ Resources:
         Type: AWS::EC2::SecurityGroup
         Properties: 
             VpcId: !Ref VPC
-            GroupDescription: Access to the load balancer that sits in front of ECS
+            GroupDescription: Access to the public load balancer
             SecurityGroupIngress:
-                # Allow access from anywhere to our load balancer
                 - CidrIp: 0.0.0.0/0
                   IpProtocol: tcp
                   FromPort: '443'
@@ -30,8 +29,39 @@ Resources:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-LoadBalancers
 
+    JenkinsSecurityGroup:
+        Type: "AWS::EC2::SecurityGroup"
+        Properties:
+            GroupDescription: Jenkins
+            SecurityGroupIngress:
+            - SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
+              IpProtocol: tcp
+              FromPort: 80
+              ToPort: 80
+            - CidrIp: 0.0.0.0/0
+              IpProtocol: tcp
+              FromPort: '22'
+              ToPort: '22'
+            VpcId: !Ref VPC
+            Tags: 
+                - Key: Name
+                  Value: !Sub ${EnvironmentName}-Jenkins
+
+    EFSIngressRule:
+        Type: AWS::EC2::SecurityGroupIngress
+        Properties:
+            FromPort: 2049
+            GroupId: !Sub ${JenkinsSecurityGroup}
+            IpProtocol: tcp
+            SourceSecurityGroupId: !Sub ${JenkinsSecurityGroup}
+            ToPort: 2049
+
 Outputs:
 
     LoadBalancerSecurityGroup:
         Description: A reference to the security group for load balancers
         Value: !Ref LoadBalancerSecurityGroup
+
+    JenkinsSecurityGroup:
+        Description: A reference to the security group for jenkins
+        Value: !Ref JenkinsSecurityGroup
