@@ -1,1 +1,2 @@
-infra/variables.sh
+infra/local_variables.sh
+infra/web-app.pem
