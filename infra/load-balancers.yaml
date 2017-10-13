@@ -31,6 +31,10 @@ Parameters:
     InstancePort:
         Description: Backend traffic port for the application
         Type: Number 
+    
+    HealthPath:
+        Description: Health check path for the backend application
+        Type: String  
 
 Resources:
 
@@ -67,7 +71,7 @@ Resources:
                   Protocol: HTTPS
                   InstanceProtocol: HTTP
             HealthCheck:
-                Target: !Sub HTTP:${InstancePort}/login
+                Target: !Sub HTTP:${InstancePort}/${HealthPath}
                 HealthyThreshold: '2'
                 UnhealthyThreshold: '2'
                 Interval: '5'
