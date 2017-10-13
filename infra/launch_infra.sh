@@ -1,11 +1,11 @@
 #!/bin/bash
 
-EXISTS=$(which jq)
+which jq >/dev/null 2>/dev/null
 if [ $? -ne 0 ]; then
 	echo "you must have jq installed on your system"
 	exit
 fi
-EXISTS=$(which aws)
+which aws >/dev/null 2>/dev/null
 if [ $? -ne 0 ]; then
 	echo "you must have aws installed on your system"
 	exit
@@ -38,13 +38,6 @@ fi
 CERTIFICATE_ARN=$(aws acm list-certificates \
 	--query "CertificateSummaryList[?DomainName==\`"*."$DOMAIN\`].CertificateArn" \
 	--output text)
-echo $CERTIFICATE_ARN
-# exit
-# $(aws acm --region us-east-1 list-certificates)
-	# --domain-name $DOMAIN\
-	# --query "Domains[?DomainName==\`$DOMAIN\`].DomainName" \
-	# --output text)
-
 
 #Sync all templates to s3 for provisioning
 echo "syncing templates to s3"
@@ -70,7 +63,8 @@ if [ $? -eq 0 ]; then
 		--parameters \
 			ParameterKey=DomainName,ParameterValue=${DOMAIN} \
 			ParameterKey=KeyName,ParameterValue=${STACK} \
-			ParameterKey=Certificate,ParameterValue=${CERTIFICATE_ARN})
+			ParameterKey=Certificate,ParameterValue=${CERTIFICATE_ARN} \
+			ParameterKey=S3Location,ParameterValue=${TEMPLATE_S3_DIR})
 else
 	RESULT=$(aws cloudformation create-stack \
 		--stack-name $STACK \
@@ -79,7 +73,8 @@ else
 		--parameters \
 			ParameterKey=DomainName,ParameterValue=${DOMAIN} \
 			ParameterKey=KeyName,ParameterValue=${STACK} \
-			ParameterKey=Certificate,ParameterValue=${CERTIFICATE_ARN})
+			ParameterKey=Certificate,ParameterValue=${CERTIFICATE_ARN} \
+			ParameterKey=S3Location,ParameterValue=${TEMPLATE_S3_DIR})
 fi
 
 #Wait for result
@@ -96,3 +91,16 @@ while true; do
 	fi
 	sleep 5
 done
+
+
+#Get jenkins initial password if it exists
+aws s3 cp s3://${TEMPLATE_S3_DIR}initialAdminPassword . >/dev/null 2>/dev/null
+if [ $? -ne 0 ]; then
+	exit
+else
+	JENKINS_PW=$(cat initialAdminPassword)
+	rm initialAdminPassword
+	aws s3 rm s3://${TEMPLATE_S3_DIR}initialAdminPassword >/dev/null 2>/dev/null
+	echo "visit https://jenkins.${DOMAIN} and enter $JENKINS_PW to configure and setup your jenkins machine"
+fi
+

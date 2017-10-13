@@ -36,8 +36,8 @@ Resources:
         SecurityGroupIngress:
         - SourceSecurityGroupId: !Ref JenkinsELBSG
           IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
+          FromPort: 8080
+          ToPort: 8080
         - CidrIp: 162.246.216.28/32
           IpProtocol: tcp
           FromPort: '22'

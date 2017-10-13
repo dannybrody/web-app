@@ -32,6 +32,10 @@ Parameters:
     Description: SSH Keyname for Jenkins Machine
     Type: String
 
+  S3Location:
+    Description: S3 location for files
+    Type: String
+
 Mappings:
   AWSRegionToAMI:
     # us-east-1:
@@ -79,7 +83,8 @@ Resources:
                   "Statement": [{
                           "Effect": "Allow",
                           "Action": [
-                              "ec2:DescribeTags"
+                              "ec2:DescribeTags",
+                              "s3:PutObject"
                           ],
                           "Resource": "*"
                   }]
@@ -144,6 +149,8 @@ Resources:
 
   AutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
+    DependsOn: 
+      - LaunchConfiguration
     Properties:
       LoadBalancerNames : 
        - !Ref LoadBalancerNames
@@ -159,6 +166,9 @@ Resources:
         - Key: Efs
           Value: !Ref JenkinsEFS
           PropagateAtLaunch: true
+        - Key: S3Location
+          Value: !Ref S3Location
+          PropagateAtLaunch: true
     CreationPolicy:
       ResourceSignal:
         Timeout: PT15M
@@ -171,6 +181,10 @@ Resources:
 
   LaunchConfiguration:
     Type: AWS::AutoScaling::LaunchConfiguration
+    DependsOn: 
+      - JenkinsEFS
+      - MountTarget1
+      - MountTarget0
     Properties:
       ImageId: !FindInMap [ AWSRegionToAMI, !Ref "AWS::Region", AMI ]
       InstanceType: !Ref InstanceType
@@ -195,31 +209,25 @@ Resources:
           REGION="`wget -qO- http://instance-data/latest/meta-data/placement/availability-zone | sed -e 's:\([0-9][0-9]*\)[a-z]*\$:\\1:'`"
           TAG_NAME="Efs"
           EFS_ID="`aws --region $REGION ec2 describe-tags --filters "Name=resource-id,Values=$INSTANCE_ID" "Name=key,Values=$TAG_NAME" --output=text | cut -f5`"
+          if [ -z "$EFS_ID" ]; then
+            sleep 60
+            EFS_ID="`aws --region $REGION ec2 describe-tags --filters "Name=resource-id,Values=$INSTANCE_ID" "Name=key,Values=$TAG_NAME" --output=text | cut -f5`"
+          fi
           mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 $EFS_ID.efs.$REGION.amazonaws.com:/ /var/lib/jenkins
 
+          #####   INSTALL JENKINS   #####
           apt-get install jenkins -y
-          
+          JENKINS_PW="/var/lib/jenkins/secrets/initialAdminPassword"
+          if [ -f "$JENKINS_PW" ]; then
+            S3_LOCATION="`aws --region $REGION ec2 describe-tags --filters "Name=resource-id,Values=$INSTANCE_ID" "Name=key,Values=S3Location" --output=text | cut -f5`"
+            aws s3 cp $JENKINS_PW s3://$S3_LOCATION
+          fi
+
+          #####   SIGNAL COMPLETE   #####
           easy_install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz
           /usr/local/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource AutoScalingGroup
 
-
-
-
-# Outputs:
-#   KeyId:
-#     Value: !GetAtt 
-#       - key
-#       - Arn
-
-# https://serverfault.com/questions/774510/jenkins-2-x-disable-initial-admin-setup
-# https://groups.google.com/forum/#!msg/jenkinsci-users/Pb4QZVc2-f0/JKUtQ_Y1NgAJ
-# Found a solution for this issue.  In previous releases, I had set this flag via JENKINS_JAVA_OPTIONS in /etc/default/jenkins.  If I move that same flag from JENKINS_JAVA_OPTIONS to JAVA_ARGS in /etc/default/jenkins, it works as expected.
-
-### INSTALL GO
-# curl -qO https://storage.googleapis.com/golang/go1.8.linux-amd64.tar.gz
-# tar -xvf go1.8.linux-amd64.tar.gz
-# sudo mv go /usr/local
-# rm go1.8.linux-amd64.tar.gz
-# cat ~/.profile
-# echo 'export PATH=$PATH:/usr/local/go/bin' | tee -a ~/.profile
-# source ~/.profile
+Outputs:
+  AutoScalingGroup:
+    Description: A reference to the AutoScalingGroup
+    Value: !Ref AutoScalingGroup

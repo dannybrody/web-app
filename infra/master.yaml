@@ -11,12 +11,16 @@ Parameters:
         Type: String
 
     KeyName:
-        Description: Fully qualified domain name (FQDN) of the site that you want to secure with the ACM certificate
+        Description: KeyName you would like for ssh access
         Type: String
 
     Certificate:
-        Description: Fully qualified domain name (FQDN) of the site that you want to secure with the ACM certificate
-        Type: String        
+        Description: SSL certificate ARN
+        Type: String
+
+    S3Location:
+        Description: S3 location for files
+        Type: String
 
 Resources:
 
@@ -53,9 +57,9 @@ Resources:
             TemplateURL: https://s3.amazonaws.com/acrdevelopment/danny/web-app/jenkins.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
-                # Subnets: !GetAtt VPC.Outputs.PrivateSubnets
-                Subnets: !GetAtt VPC.Outputs.PublicSubnets
+                Subnets: !GetAtt VPC.Outputs.PrivateSubnets
                 VPC: !GetAtt VPC.Outputs.VPC
                 LoadBalancerNames: !GetAtt JenkinsELB.Outputs.LoadBalancer
                 JenkinsSecurityGroup: !GetAtt SecurityGroups.Outputs.JenkinsSecurityGroup
                 KeyName: !Ref KeyName
+                S3Location: !Ref S3Location
