@@ -5,6 +5,7 @@ import (
     "net/http"
     "strings"
     "log"
+    "io"
 )
 
 // e.g. http.HandleFunc("/health-check", HealthCheckHandler)
