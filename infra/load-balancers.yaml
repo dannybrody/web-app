@@ -1,5 +1,5 @@
 Description: >
-    This template deploys an Application Load Balancer that exposes various services.
+    This template deploys an ELastic Load Balancer that exposes various services.
     We create them it a seperate nested template, so it can be referenced by all of the other nested templates.
 
 Parameters:
@@ -25,8 +25,12 @@ Parameters:
         Type: String
 
     Certificate:
-        Description: Fully qualified domain name (FQDN) of the site that you want to secure with the ACM certificate
+        Description: ACM certificate for SSL
         Type: String  
+
+    InstancePort:
+        Description: Backend traffic port for the application
+        Type: Number 
 
 Resources:
 
@@ -44,7 +48,7 @@ Resources:
     LoadBalancer:
         Type: AWS::ElasticLoadBalancing::LoadBalancer
         Properties:
-            LoadBalancerName: !Sub ${EnvironmentName}-Jenkins-ELB
+            LoadBalancerName: !Sub ${EnvironmentName}-${SubDomainName}-ELB
             CrossZone: true
             Subnets: !Ref Subnets
             Scheme: internet-facing
@@ -55,23 +59,19 @@ Resources:
                   Value: !Ref EnvironmentName
             Listeners:
                 - LoadBalancerPort: 80
-                  InstancePort: 8080
+                  InstancePort: !Ref InstancePort
                   Protocol: HTTP
-                - InstancePort: 8080
+                - InstancePort: !Ref InstancePort
                   SSLCertificateId: !Ref Certificate
                   LoadBalancerPort: 443
                   Protocol: HTTPS
                   InstanceProtocol: HTTP
             HealthCheck:
-                Target: HTTP:8080/login
-                HealthyThreshold: '3'
-                UnhealthyThreshold: '5'
-                Interval: '30'
-                Timeout: '5'
-                HealthyThreshold: '3'
-                UnhealthyThreshold: '5'
-                Interval: '30'
-                Timeout: '5'
+                Target: !Sub HTTP:${InstancePort}/login
+                HealthyThreshold: '2'
+                UnhealthyThreshold: '2'
+                Interval: '5'
+                Timeout: '2'
             ConnectionDrainingPolicy:
                 Enabled: 'true'
                 Timeout: '60'
@@ -79,9 +79,6 @@ Resources:
 Outputs:
 
     LoadBalancer:
-        Description: A reference to the Jenkins ELB
+        Description: A reference to the ELB
         Value: !Ref LoadBalancer
 
-    LoadBalancerUrl:
-        Description: The URL of the Jenkins ELB
-        Value: !GetAtt LoadBalancer.DNSName
