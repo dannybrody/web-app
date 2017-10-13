@@ -19,7 +19,7 @@ Resources:
       Type: AWS::EC2::SecurityGroup
       Properties: 
         VpcId: !Ref VPC
-        GroupDescription: Access to the public load balancer
+        GroupDescription: !Sub ${EnvironmentName}-Jenkins ELB Access
         SecurityGroupIngress:
           - CidrIp: 0.0.0.0/0
             IpProtocol: tcp
@@ -56,12 +56,52 @@ Resources:
         SourceSecurityGroupId: !Sub ${JenkinsSecurityGroup}
         ToPort: 2049
 
+    AppELBSG:
+      Type: AWS::EC2::SecurityGroup
+      Properties: 
+        VpcId: !Ref VPC
+        GroupDescription: !Sub ${EnvironmentName} ELB Access
+        SecurityGroupIngress:
+          - CidrIp: 0.0.0.0/0
+            IpProtocol: tcp
+            FromPort: '443'
+            ToPort: '443'
+        Tags: 
+          - Key: Name
+            Value: !Sub ${EnvironmentName}-ELB
+
+    AppSecurityGroup:
+      Type: "AWS::EC2::SecurityGroup"
+      Properties:
+        GroupDescription: App
+        SecurityGroupIngress:
+        - SourceSecurityGroupId: !Ref AppELBSG
+          IpProtocol: tcp
+          FromPort: 8081
+          ToPort: 8081
+        - CidrIp: 162.246.216.28/32
+          IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+        VpcId: !Ref VPC
+        Tags: 
+          - Key: Name
+            Value: !Sub ${EnvironmentName}
+
 Outputs:
 
     JenkinsELBSG:
-      Description: A reference to the security group for load balancers
+      Description: A reference to the security group for Jenkins load balancer
       Value: !Ref JenkinsELBSG
 
     JenkinsSecurityGroup:
       Description: A reference to the security group for jenkins
       Value: !Ref JenkinsSecurityGroup
+
+    AppELBSG:
+      Description: A reference to the security group for App load balancer
+      Value: !Ref AppELBSG
+
+    AppSecurityGroup:
+      Description: A reference to the security group for App
+      Value: !Ref AppSecurityGroup
