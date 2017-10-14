@@ -1,30 +1,30 @@
-// @APIVersion 1.0.0
-// @Title beego Test API
-// @Description beego has a very cool tools to autogenerate documents for your API
-// @Contact astaxie@gmail.com
-// @TermsOfServiceUrl http://beego.me/
-// @License Apache 2.0
-// @LicenseUrl http://www.apache.org/licenses/LICENSE-2.0.html
 package routers
 
 import (
-	"app/controllers"
-
 	"github.com/astaxie/beego"
+	"app/controllers"
 )
 
+
 func init() {
-	ns := beego.NewNamespace("/v1",
-		beego.NSNamespace("/object",
-			beego.NSInclude(
-				&controllers.ObjectController{},
-			),
-		),
-		beego.NSNamespace("/user",
-			beego.NSInclude(
-				&controllers.UserController{},
-			),
-		),
-	)
-	beego.AddNamespace(ns)
+
+  beego.Router("/", &controllers.IndexController{})
+
+	beego.Router("/accounts/signup", &controllers.SignupController{})
+
+	beego.Router("/accounts/signin", &controllers.SigninController{})
+
+	beego.Router("/accounts/signout", &controllers.SignoutController{})
+
+	beego.Router("/accounts/verify/:uuid([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})", &controllers.AccountVerifyController{})
+
+  beego.Router("/accounts/profile", &controllers.ProfileController{})
+
+	beego.Router("/accounts/delete", &controllers.DeleteController{})
+
+  beego.Router("/accounts/security", &controllers.SecurityController{})
+
+  beego.Router("/accounts/forgotpassword", &controllers.ForgotPasswordController{})	
+
+  beego.Router("/accounts/resetpassword/:uuid([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})", &controllers.ResetPasswordController{})
 }

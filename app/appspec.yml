@@ -19,5 +19,11 @@ files:
     destination: /home/ubuntu/gocode/src/app/controllers
   - source: /conf
     destination: /home/ubuntu/gocode/src/app/conf
+  - source: /static
+    destination: /home/ubuntu/gocode/src/app/static
+  - source: /vendor
+    destination: /home/ubuntu/gocode/src/app/vendor
+  - source: /views
+    destination: /home/ubuntu/gocode/src/app/views
 hooks:
 
