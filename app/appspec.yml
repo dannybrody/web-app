@@ -11,5 +11,13 @@ files:
     destination: /home/ubuntu
   - source: /routers
     destination: /home/ubuntu/routers
+  - source: /tests
+    destination: /home/ubuntu/tests
+  - source: /models
+    destination: /home/ubuntu/models
+  - source: /controllers
+    destination: /home/ubuntu/controllers
+  - source: /conf
+    destination: /home/ubuntu/conf
 hooks:
 
