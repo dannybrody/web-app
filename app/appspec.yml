@@ -8,16 +8,16 @@ os: linux
 # (You cannot specify both "os: linux" and "os: windows".)
 files:
   - source: main.go
-    destination: /home/ubuntu
+    destination: /home/ubuntu/gocode/src/app
   - source: /routers
-    destination: /home/ubuntu/routers
+    destination: /home/ubuntu/gocode/src/app/routers
   - source: /tests
-    destination: /home/ubuntu/tests
+    destination: /home/ubuntu/gocode/src/app/tests
   - source: /models
-    destination: /home/ubuntu/models
+    destination: /home/ubuntu/gocode/src/app/models
   - source: /controllers
-    destination: /home/ubuntu/controllers
+    destination: /home/ubuntu/gocode/src/app/controllers
   - source: /conf
-    destination: /home/ubuntu/conf
+    destination: /home/ubuntu/gocode/src/app/conf
 hooks:
 
