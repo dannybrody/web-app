@@ -10,6 +10,6 @@ files:
   - source: main.go
     destination: /home/ubuntu
   - source: /routers
-    destination: /home/ubuntu
+    destination: /home/ubuntu/routers
 hooks:
 
