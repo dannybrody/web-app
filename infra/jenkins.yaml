@@ -32,8 +32,12 @@ Parameters:
     Description: SSH Keyname for Jenkins Machine
     Type: String
 
-  S3Location:
-    Description: S3 location for files
+  S3Bucket:
+    Description: S3 bucket name
+    Type: String
+
+  S3Prefix:
+    Description: S3 prefix for code deploy
     Type: String
 
 Mappings:
@@ -63,31 +67,108 @@ Mappings:
 
 Resources:
 
+  JenkinsCodeDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      ManagedPolicyArns: 
+        - 'arn:aws:iam::aws:policy/AWSCodeDeployDeployerAccess'
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Join 
+                - ''
+                - - 'arn:aws:iam::'
+                  - !Ref 'AWS::AccountId'
+                  - ':root'
+            Action:
+              - 'sts:AssumeRole'
+      Policies: 
+        - PolicyName: !Sub ${EnvironmentName}-Jenkins-CodeDeploy-Policy
+          PolicyDocument: 
+            {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [ "s3:*" ],
+                  "Resource": [
+                    {"Fn::Join": ["", ["arn:aws:s3:::", {"Ref": "S3Bucket"}, "/*"]]}, 
+                    {"Fn::Join": ["", ["arn:aws:s3:::", {"Ref": "S3Bucket"}]]}
+                  ]
+                }, 
+                {
+                  "Effect": "Allow",
+                  "Action": ["s3:GetBucketLocation", "s3:ListAllMyBuckets"],
+                  "Resource": "*"
+                }
+              ]
+            }
+      RoleName: !Sub ${EnvironmentName}-Jenkins-CodeDeploy-Role
+
+  STSAssumeRoleJenkinsCodeDeployRole:
+    Type: AWS::IAM::Policy
+    Properties: 
+      PolicyDocument:
+        {
+          "Version" : "2012-10-17",
+          "Statement" : [ {
+            "Effect" : "Allow",
+            "Action" : [ "sts:AssumeRole" ],
+            "Resource" : [{
+              "Fn::GetAtt" : [ "JenkinsCodeDeployRole", "Arn" ]
+            }]
+          }]
+        }
+      PolicyName: !Sub ${EnvironmentName}-Jenkins-CodeDeploy-AssumeRole
+      Roles:
+        - !Ref JenkinsRole
+
   JenkinsRole:
     Type: AWS::IAM::Role
     Properties:
       Path: /
+      ManagedPolicyArns: 
+        - 'arn:aws:iam::aws:policy/AWSCodeDeployDeployerAccess'
       AssumeRolePolicyDocument: |
         {
-            "Statement": [{
-                "Effect": "Allow",
-                "Principal": { "Service": [ "ec2.amazonaws.com" ]},
-                "Action": [ "sts:AssumeRole" ]
-            }]
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": { "Service": [ "ec2.amazonaws.com" ]},
+              "Action": [ "sts:AssumeRole" ]
+            }
+          ]
         }
       Policies: 
           - PolicyName: !Sub ${EnvironmentName}-Jenkins-Policy
             PolicyDocument: 
               {
-                  "Version": "2012-10-17",
-                  "Statement": [{
-                          "Effect": "Allow",
-                          "Action": [
-                              "ec2:DescribeTags",
-                              "s3:PutObject"
-                          ],
-                          "Resource": "*"
-                  }]
+                "Version": "2012-10-17",
+                "Statement": [{
+                  "Effect": "Allow",
+                  "Action": [
+                    "ec2:DescribeTags",
+                    "s3:PutObject",
+                    "codedeploy:ListApplications"
+                  ],
+                  "Resource": "*"
+                }, 
+                {
+                  "Effect": "Allow",
+                  "Action": [ "s3:*" ],
+                  "Resource": [
+                    {"Fn::Join": ["", ["arn:aws:s3:::", {"Ref": "S3Bucket"}, "/*"]]}, 
+                    {"Fn::Join": ["", ["arn:aws:s3:::", {"Ref": "S3Bucket"}]]}
+                  ]
+                }, 
+                {
+                  "Effect": "Allow",
+                  "Action": ["s3:GetBucketLocation", "s3:ListAllMyBuckets"],
+                  "Resource": "*"
+                }]
               }
       RoleName: !Sub ${EnvironmentName}-Jenkins-Role
 
@@ -135,8 +216,7 @@ Resources:
       FileSystemId: !Ref JenkinsEFS
       SubnetId: !Select [ 0, !Ref Subnets ]
       SecurityGroups:
-        - 
-          !Ref JenkinsSecurityGroup
+        - !Ref JenkinsSecurityGroup
 
   MountTarget1:
     Type: AWS::EFS::MountTarget
@@ -144,8 +224,7 @@ Resources:
       FileSystemId: !Ref JenkinsEFS
       SubnetId: !Select [ 1, !Ref Subnets ]
       SecurityGroups:
-        - 
-          !Ref JenkinsSecurityGroup
+        - !Ref JenkinsSecurityGroup
 
   AutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -167,7 +246,7 @@ Resources:
           Value: !Ref JenkinsEFS
           PropagateAtLaunch: true
         - Key: S3Location
-          Value: !Ref S3Location
+          Value: !Join [ '/', [ !Ref S3Bucket, !Ref S3Prefix, '' ]]
           PropagateAtLaunch: true
     CreationPolicy:
       ResourceSignal:
@@ -239,3 +318,9 @@ Outputs:
   AutoScalingGroup:
     Description: A reference to the AutoScalingGroup
     Value: !Ref AutoScalingGroup
+
+  JenkinsCodeDeployRole:
+    Description: ARN of the JenkinsCodeDeploy Role
+    Value: !GetAtt
+      - JenkinsCodeDeployRole 
+      - Arn

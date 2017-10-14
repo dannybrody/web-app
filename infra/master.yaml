@@ -18,8 +18,12 @@ Parameters:
         Description: SSL certificate ARN
         Type: String
 
-    S3Location:
-        Description: S3 location for files
+    S3Bucket:
+        Description: S3 bucket name
+        Type: String
+
+    S3Prefix:
+        Description: S3 prefix for code deploy
         Type: String
 
 Resources:
@@ -27,14 +31,14 @@ Resources:
     VPC:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/acrdevelopment/danny/web-app/vpc.yaml
+            TemplateURL: https://s3.amazonaws.com/cf-templates-dej2znqywezl-ap-southeast-2/web-app/vpc.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
 
     SecurityGroups:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/acrdevelopment/danny/web-app/security-groups.yaml
+            TemplateURL: https://s3.amazonaws.com/cf-templates-dej2znqywezl-ap-southeast-2/web-app/security-groups.yaml
             Parameters: 
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -42,7 +46,7 @@ Resources:
     JenkinsELB:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/acrdevelopment/danny/web-app/load-balancers.yaml
+            TemplateURL: https://s3.amazonaws.com/cf-templates-dej2znqywezl-ap-southeast-2/web-app/load-balancers.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 Subnets: !GetAtt VPC.Outputs.PublicSubnets
@@ -50,16 +54,47 @@ Resources:
                 Certificate: !Ref Certificate
                 DomainName: !Ref DomainName
                 SubDomainName: jenkins
+                InstancePort: 8080
+                HealthPath: login
 
     JenkinsCI:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/acrdevelopment/danny/web-app/jenkins.yaml
+            TemplateURL: https://s3.amazonaws.com/cf-templates-dej2znqywezl-ap-southeast-2/web-app/jenkins.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
-                Subnets: !GetAtt VPC.Outputs.PrivateSubnets
+                Subnets: !GetAtt VPC.Outputs.PublicSubnets
                 VPC: !GetAtt VPC.Outputs.VPC
                 LoadBalancerNames: !GetAtt JenkinsELB.Outputs.LoadBalancer
                 JenkinsSecurityGroup: !GetAtt SecurityGroups.Outputs.JenkinsSecurityGroup
                 KeyName: !Ref KeyName
-                S3Location: !Ref S3Location
+                S3Bucket: !Ref S3Bucket
+                S3Prefix: !Ref S3Prefix
+
+    WebAppELB:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://s3.amazonaws.com/cf-templates-dej2znqywezl-ap-southeast-2/web-app/load-balancers.yaml
+            Parameters:
+                EnvironmentName: !Ref AWS::StackName
+                Subnets: !GetAtt VPC.Outputs.PublicSubnets
+                SecurityGroup: !GetAtt SecurityGroups.Outputs.AppELBSG
+                Certificate: !Ref Certificate
+                DomainName: !Ref DomainName
+                SubDomainName: app
+                InstancePort: 8080
+                HealthPath: swagger/
+
+    App:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://s3.amazonaws.com/cf-templates-dej2znqywezl-ap-southeast-2/web-app/app.yaml
+            Parameters:
+                EnvironmentName: !Ref AWS::StackName
+                Subnets: !GetAtt VPC.Outputs.PublicSubnets
+                VPC: !GetAtt VPC.Outputs.VPC
+                LoadBalancerNames: !GetAtt WebAppELB.Outputs.LoadBalancer
+                SecurityGroup: !GetAtt SecurityGroups.Outputs.AppSecurityGroup
+                KeyName: !Ref KeyName
+                S3Bucket: !Ref S3Bucket
+                S3Prefix: !Ref S3Prefix

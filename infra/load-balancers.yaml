@@ -1,5 +1,5 @@
 Description: >
-    This template deploys an ELastic Load Balancer that exposes various services.
+    This template deploys an Elastic Load Balancer that exposes various services.
     We create them it a seperate nested template, so it can be referenced by all of the other nested templates.
 
 Parameters:

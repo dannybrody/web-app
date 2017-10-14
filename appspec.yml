@@ -1,0 +1,13 @@
+version: 0.0
+# version: Currently the only allowed value is 0.0. It is reserved by AWS CodeDeploy
+# http://docs.aws.amazon.com/codedeploy/latest/userguide/app-spec-ref-structure.html
+os: linux
+# Specify "os: linux" if this revision targets Amazon Linux, 
+#   Red Hat Enterprise Linux (RHEL), or Ubuntu Server  
+# Specify "os: windows" if this revision targets Windows Server instances.
+# (You cannot specify both "os: linux" and "os: windows".)
+files:
+  - source: /app
+    destination: /
+hooks:
+

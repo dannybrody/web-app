@@ -38,7 +38,7 @@ Resources:
           IpProtocol: tcp
           FromPort: 8080
           ToPort: 8080
-        - CidrIp: 162.246.216.28/32
+        - CidrIp: 0.0.0.0/0
           IpProtocol: tcp
           FromPort: '22'
           ToPort: '22'
@@ -77,9 +77,9 @@ Resources:
         SecurityGroupIngress:
         - SourceSecurityGroupId: !Ref AppELBSG
           IpProtocol: tcp
-          FromPort: 8081
-          ToPort: 8081
-        - CidrIp: 162.246.216.28/32
+          FromPort: 8080
+          ToPort: 8080
+        - CidrIp: 0.0.0.0/0
           IpProtocol: tcp
           FromPort: '22'
           ToPort: '22'
