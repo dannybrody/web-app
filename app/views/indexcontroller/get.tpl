@@ -10,7 +10,7 @@
 
     <title>{{.Title}}</title>
     <!-- Bootstrap core CSS -->
-    <link rel="stylesheet" href="//{{.base_url}}/static/bootstrap-3.3.5-dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//{{.base_url}}/static/twbs/3.3.6/css/bootstrap.min.css">
     <!-- Custom Global styles for this template -->
     <link rel="stylesheet" href="//{{.base_url}}/static/css/globalStyles.css">
   </head>
@@ -85,5 +85,5 @@
   </footer>
 
   <script src="//{{.base_url}}/static/jquery/jquery-2.1.4.min.js"></script>
-  <script src="//{{.base_url}}/static/bootstrap-3.3.5-dist/js/bootstrap.min.js"></script>
+  <script src="//{{.base_url}}/static/twbs/3.3.6/js/bootstrap.min.js"></script>
 </html>
