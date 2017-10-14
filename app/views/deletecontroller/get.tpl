@@ -21,7 +21,7 @@
             <button type="submit" class="btn btn-danger" value="Delete">Delete account</button>
           </div>
           <div class="col-xs-6">
-            <p><a class="btn btn-primary" href="//{{.base_url}}/accounts/profile">Cancel</a></p>
+            <p><a class="btn btn-primary" href="/accounts/profile">Cancel</a></p>
           </div>
         </div>
       </form>

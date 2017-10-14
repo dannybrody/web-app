@@ -14,13 +14,13 @@
       </div>
       <button type="submit" class="btn btn-primary btn-lg">Log In</button>
     </form>
-    <p><a href="//{{.base_url}}/accounts/forgotpassword">Forgot password?</a></p>
+    <p><a href="/accounts/forgotpassword">Forgot password?</a></p>
   </div><!-- end row -->
   <hr>
   <div class="row">
     <h4 class="text-center">Or</h4>
   </div><!-- end row -->
   <div class="row">
-    <p class="text-center"><a href="//{{.base_url}}/accounts/signup" class="btn btn-success">Create new account</a></p>
+    <p class="text-center"><a href="/accounts/signup" class="btn btn-success">Create new account</a></p>
   </div><!-- end row -->
 </div>

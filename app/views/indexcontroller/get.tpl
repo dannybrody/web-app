@@ -6,13 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Beego User Registration Example">
     <meta name="author" content="Tal Lannder">
-    <link rel="icon" href="//{{.base_url}}/static/img/favicon.ico">
+    <link rel="icon" href="/static/img/favicon.ico">
 
     <title>{{.Title}}</title>
     <!-- Bootstrap core CSS -->
-    <link rel="stylesheet" href="//{{.base_url}}/static/twbs/3.3.6/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/twbs/3.3.6/css/bootstrap.min.css">
     <!-- Custom Global styles for this template -->
-    <link rel="stylesheet" href="//{{.base_url}}/static/css/globalStyles.css">
+    <link rel="stylesheet" href="/static/css/globalStyles.css">
   </head>
 
   <body>
@@ -22,16 +22,16 @@
       <div class="navbar-header">
         <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
           <span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>
-        </button><a class="navbar-brand" href="/"><img src="//{{.base_url}}/static/img/logo.png" alt="My Logo"></a>
+        </button><a class="navbar-brand" href="/"><img src="/static/img/logo.png" alt="My Logo"></a>
       </div><!-- end navbar head -->
       <div id="navbar" class="navbar-collapse collapse">
         <ul class="nav navbar-nav pull-right">
           {{if .Session}}
           <li><p class="navbar-text">Welcome, {{.Session.first}}</p></li>
-          <li><a href="//{{.base_url}}/accounts/logout"><span class="glyphicon glyphicon-off"></span></a></li>
-          <li><a href="//{{.base_url}}/accounts/profile"><span class="glyphicon glyphicon-user"></span></a></li>
+          <li><a href="/accounts/logout"><span class="glyphicon glyphicon-off"></span></a></li>
+          <li><a href="/accounts/profile"><span class="glyphicon glyphicon-user"></span></a></li>
           {{else}}
-          <form class="navbar-form navbar-left" role="signin" action="//{{.base_url}}/accounts/signin" method="POST">
+          <form class="navbar-form navbar-left" role="signin" action="/accounts/signin" method="POST">
             <div class="form-group">
               <input type="email" name="email" class="form-control" placeholder="email">
             </div>
@@ -40,7 +40,7 @@
             </div>
             <button type="submit" class="btn btn-primary">Log in</button>
           </form>
-          <li><p class="navbar-btn"><a href="//{{.base_url}}/accounts/signup" class="btn btn-success" role="button">Sign up</a></p></li>
+          <li><p class="navbar-btn"><a href="/accounts/signup" class="btn btn-success" role="button">Sign up</a></p></li>
           {{end}}
         </ul><!-- end nav pull-right -->
       </div><!-- end nav-collapse -->
@@ -84,6 +84,6 @@
     </div><!-- end container -->
   </footer>
 
-  <script src="//{{.base_url}}/static/jquery/jquery-2.1.4.min.js"></script>
-  <script src="//{{.base_url}}/static/twbs/3.3.6/js/bootstrap.min.js"></script>
+  <script src="/static/jquery/jquery-2.1.4.min.js"></script>
+  <script src="/static/twbs/3.3.6/js/bootstrap.min.js"></script>
 </html>

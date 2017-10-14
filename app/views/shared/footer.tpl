@@ -8,5 +8,5 @@
     </div><!-- end container -->
   </footer>
 
-  <script src="//{{.base_url}}/static/jquery/jquery-2.1.4.min.js"></script>
-  <script src="//{{.base_url}}/static/twbs/3.3.6/js/bootstrap.min.js"></script>
+  <script src="/static/jquery/jquery-2.1.4.min.js"></script>
+  <script src="/static/twbs/3.3.6/js/bootstrap.min.js"></script>

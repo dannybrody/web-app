@@ -71,7 +71,7 @@
       <h3 class="panel-title">Danger zone</h3>
     </div>
     <div class="panel-body">
-      <p class="text-center"><a class="btn btn-danger" href="//{{.base_url}}/accounts/delete">Remove account</a></p>
+      <p class="text-center"><a class="btn btn-danger" href="/accounts/delete">Remove account</a></p>
     </div>
   </div>
 </div><!-- end container -->
