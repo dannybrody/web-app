@@ -58,17 +58,6 @@ func init() {
 
 func main() {
 
-
-  sess := session.New(&aws.Config{
-    LogLevel: aws.LogLevel(aws.LogDebugWithHTTPBody),
-    CredentialsChainVerboseErrors: aws.Bool(true),
-    Region: aws.String(region),
-  }))
-
-  _, err := sess.Config.Credentials.Get()
-  fmt.Println(err)
-
-
   beego.ErrorController(&controllers.ErrorController{})
   beego.Run()
 }

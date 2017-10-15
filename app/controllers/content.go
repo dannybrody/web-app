@@ -16,6 +16,7 @@ import (
 var (
 
   aws_region = beego.AppConfig.String("aws_region")
+  bucket = beego.AppConfig.String("bucket")
   sess = session.New(&aws.Config{
     Region: aws.String(aws_region),
   })
@@ -61,10 +62,11 @@ func (this *ContentController) Post() {
     fmt.Println(err)
   }
 
+  key := "web-app/uploads/"+this.session["uid"].(string)+"/"+header.Filename
   input := &s3.PutObjectInput{
       Body:                 aws.ReadSeekCloser(file),
-      Bucket:               aws.String("cf-templates-dej2znqywezl-ap-southeast-2"),
-      Key:                  aws.String("web-app/uploads/"+this.session["uid"].(string)+"/"+header.Filename),
+      Bucket:               aws.String(bucket),
+      Key:                  aws.String(key),
   }
   result, err := svc.PutObject(input)
   if err != nil {
@@ -83,17 +85,17 @@ func (this *ContentController) Post() {
 
   fmt.Println(result)
 
-  // o := orm.NewOrm()
-  // user := models.Account{Uid: this.session["uid"].(string)}
-  // file := models.File{}
-  // file.Filename = header.Filename
-  // file.Location = "location"
-  // file.Account = user
-  // _, err = o.Insert(&file)
-  //   if err != nil {
-  //   beego.Error("SignupController:Post - Got err inserting file to the database: ", err)
-  //   return
-  // }
+  o := orm.NewOrm()
+  user := models.Account{Uid: this.session["uid"].(string)}
+  file := models.File{}
+  file.Filename = header.Filename
+  file.Location = "location"
+  file.Account = user
+  _, err = o.Insert(&file)
+    if err != nil {
+    beego.Error("SignupController:Post - Got err inserting file to the database: ", err)
+    return
+  }
 
   this.Redirect("/accounts/content", 303)
 
