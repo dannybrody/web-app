@@ -3,7 +3,7 @@ package controllers
 import (
   "github.com/astaxie/beego"
   "github.com/astaxie/beego/orm"
-  "github.com/astaxie/beego/utils"
+  // "github.com/astaxie/beego/utils"
   "github.com/astaxie/beego/validation"
   _ "github.com/astaxie/beego/cache/redis"
   "github.com/twinj/uuid"
@@ -98,26 +98,27 @@ func (this *SignupController) Post() {
   }
 
   // send activation email
-  link := "http://" + base_url + "/accounts/verify/" + registration_uid
+  // link := "http://" + base_url + "/accounts/verify/" + registration_uid
 
-  mail := utils.NewEMail(email_config)
-  mail.To = []string{signupform.Email}
-  mail.From = gmail_account
-  mail.Subject = "Beego-Ureg - Account Activation"
-  mail.HTML = "To verify your account, please click on the following link.<br><br><a href=\""+link+
-  "\">"+link+"</a><br><br>Best Regards,<br>Awesome's team"
+  // mail := utils.NewEMail(email_config)
+  // mail.To = []string{signupform.Email}
+  // mail.From = gmail_account
+  // mail.Subject = "Beego-Ureg - Account Activation"
+  // mail.HTML = "To verify your account, please click on the following link.<br><br><a href=\""+link+
+  // "\">"+link+"</a><br><br>Best Regards,<br>Awesome's team"
 
-  err = mail.Send()
+  // err = mail.Send()
 
-  if err != nil {
-    beego.Error("SignupController:Post - Unable to send verification email")
-    flash.Error("Unable to send verification email")
-    flash.Store(&this.Controller)
-    return
-  }
+  // if err != nil {
+  //   beego.Error("SignupController:Post - Unable to send verification email")
+  //   flash.Error("Unable to send verification email")
+  //   //delete the user    
+  //   flash.Store(&this.Controller)
+  //   return
+  // }
 
   beego.Debug("SignupController:Post - After sendEmail finished successfully")
-  flash.Notice("Your account has been created. Please check your email to verify and activate the account before login.")
+  flash.Notice("Your account has been created")
   flash.Store(&this.Controller)
   this.Redirect("/accounts/signin", 303)
 

@@ -13,6 +13,10 @@
     <link rel="stylesheet" href="/static/twbs/3.3.6/css/bootstrap.min.css">
     <!-- Custom Global styles for this template -->
     <link rel="stylesheet" href="/static/css/globalStyles.css">
+
+    <script src="/static/jquery/jquery-2.1.4.min.js"></script>
+    <script src="/static/twbs/3.3.6/js/bootstrap.min.js"></script>
+    <script src="/static/js/password_feedback.js"></script>
   </head>
   <body style="padding-bottom: 35px">
 {{.Header}}

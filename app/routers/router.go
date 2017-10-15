@@ -20,6 +20,8 @@ func init() {
 
 	beego.Router("/accounts/profile", &controllers.ProfileController{})
 
+	beego.Router("/accounts/content", &controllers.ContentController{})
+
 	beego.Router("/accounts/delete", &controllers.DeleteController{})
 
 	beego.Router("/accounts/security", &controllers.SecurityController{})

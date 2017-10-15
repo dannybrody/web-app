@@ -32,6 +32,11 @@
   <div class="container">
     <ul class="nav nav-tabs nav-justified">
       <li role="presentation"{{if .ProfileActive}} class="active"{{end}}>
+        <a href="/accounts/content">
+          <span class="glyphicon glyphicon-file" aria-hidden="true"></span> Uploaded
+        </a>
+      </li>
+      <li role="presentation"{{if .ProfileActive}} class="active"{{end}}>
         <a href="/accounts/profile">
           <span class="glyphicon glyphicon-user" aria-hidden="true"></span> Profile
         </a>

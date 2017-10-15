@@ -65,12 +65,12 @@ func (this *SigninController) Post() {
     return
   }
 
-  if user.Registration_uid != "" {
+  // if user.Registration_uid != "" {
 
-    flash.Error("Please check your email to activate your account before login.")
-    flash.Store(&this.Controller)
-    return
-  }
+  //   flash.Error("Please check your email to activate your account before login.")
+  //   flash.Store(&this.Controller)
+  //   return
+  // }
 
   //******** Compare submitted password with the saved hash
   err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(submittedPassword))
@@ -96,6 +96,6 @@ func (this *SigninController) Post() {
     this.Redirect(redirect_after_login, 303)
   }
 
-  this.Redirect("/accounts/profile", 303)
+  this.Redirect("/accounts/content", 303)
 
 }//EOF SigninController:Post

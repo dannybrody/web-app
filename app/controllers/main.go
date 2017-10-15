@@ -19,7 +19,7 @@ var(
 	CacheProvider string = beego.AppConfig.String("CacheProvider")
 	CacheConnection string = beego.AppConfig.String("CacheConnection")
 	cpt *captcha.Captcha
-  email_config string = `{"username":"` + gmail_account + `","password":"` + gmail_account_password + `","host":"smtp.gmail.com","port":587}`
+  email_config string = `{"username":"` + gmail_account + `","password":"` + gmail_account_password + `","host":"smtp.mail.yahoo.com","port":465}`
 )
 
 

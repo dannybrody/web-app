@@ -18,6 +18,14 @@ type Account struct {
 	Registration_uid               string
 	Registration_date              time.Time `orm:"auto_now_add;type(datetime)"`
 	Password_reset_uid             string
+	Files 						   []*File `orm:"reverse(many)"`
+}
+
+type File struct {
+    Id    						   int
+    Location					   string `orm:"unique"`
+    Account  					   *Account  `orm:"rel(fk)"`
+    Registration_date              time.Time `orm:"auto_now_add;type(datetime)"`
 }
 
 
@@ -44,5 +52,20 @@ func (account Account) CopyUpdateForm(form *FormAccountUpdate) Account {
 
 
 func init() {
-	orm.RegisterModel(new(Account))
+	orm.RegisterModel(new(Account),new(File))
 }
+
+// func main() {
+//     o := orm.NewOrm()
+//     o.Using("default") // Using default, you can use other database
+
+//     profile := new(Profile)
+//     profile.Age = 30
+
+//     user := new(User)
+//     user.Profile = profile
+//     user.Name = "slene"
+
+//     fmt.Println(o.Insert(profile))
+//     fmt.Println(o.Insert(user))
+// }
