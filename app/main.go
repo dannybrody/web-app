@@ -1,19 +1,3 @@
-/*package main
-
-import (
-	_ "app/routers"
-
-	"github.com/astaxie/beego"
-)
-
-func main() {
-	if beego.BConfig.RunMode == "dev" {
-		beego.BConfig.WebConfig.DirectoryIndex = true
-		beego.BConfig.WebConfig.StaticDir["/swagger"] = "swagger"
-	}
-	beego.Run()
-}
-*/
 
 package main
 
@@ -36,6 +20,7 @@ var (
   db_write_MaxIdle, db_write_MaxIdleErr = beego.AppConfig.Int("db_write_MaxIdle")
   db_write_MaxConn, db_write_MaxConnErr = beego.AppConfig.Int("db_write_MaxConn")
 
+  aws_region = beego.AppConfig.String("aws_region")
   db_read_LogVerbose, _ = beego.AppConfig.Bool("db_read_LogVerbose")
   db_read_ConnString string = beego.AppConfig.String("db_read_ConnString")
   db_read_DriverName string = beego.AppConfig.String("db_read_DriverName")
@@ -72,6 +57,18 @@ func init() {
 
 
 func main() {
+
+
+  sess := session.New(&aws.Config{
+    LogLevel: aws.LogLevel(aws.LogDebugWithHTTPBody),
+    CredentialsChainVerboseErrors: aws.Bool(true),
+    Region: aws.String(region),
+  }))
+
+  _, err := sess.Config.Credentials.Get()
+  fmt.Println(err)
+
+
   beego.ErrorController(&controllers.ErrorController{})
   beego.Run()
 }

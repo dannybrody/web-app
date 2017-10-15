@@ -1,14 +1,27 @@
 package controllers
 
 import (
-  "golang.org/x/crypto/bcrypt"
+  // "golang.org/x/crypto/bcrypt"
   "github.com/astaxie/beego"
   "github.com/astaxie/beego/orm"
-  "github.com/astaxie/beego/validation"
+  // "github.com/astaxie/beego/validation"
   _ "github.com/astaxie/beego/cache/redis"
   "app/models"
+  "fmt"
+  "github.com/aws/aws-sdk-go/aws/session"
+  "github.com/aws/aws-sdk-go/aws"
+  "github.com/aws/aws-sdk-go/service/s3"
+  "github.com/aws/aws-sdk-go/aws/awserr"
 )
+var (
 
+  aws_region = beego.AppConfig.String("aws_region")
+  sess = session.New(&aws.Config{
+    Region: aws.String(aws_region),
+  })
+  svc = s3.New(sess)
+
+)
 
 type ContentController struct {
   AccountController
@@ -43,97 +56,45 @@ func (this *ContentController) Get() {
 
 func (this *ContentController) Post() {
   beego.Debug("In ContentController:Post - Start")
-
-  this.Data["ProfileActive"] = true
-
-  flash := beego.NewFlash()
-
-  o := orm.NewOrm()
-  o.Using("write")
-
-  user := models.Account{Uid: this.session["uid"].(string)}
-
-  beego.Debug("In ContentController:Post - Reading user from the database")
-
-  err := o.Read(&user)
-
+  file, header, err := this.GetFile("file")
   if err != nil {
-    flash.Error("Internal server error - Please try later or let us know that something whent wrong.")
-    flash.Store(&this.Controller)
-    this.DelSession("session")
-    this.Redirect("/accounts/signin", 303)
+    fmt.Println(err)
   }
 
-  // In this case try to parse the submitted form if unable to
-  // parse use the exsisting user information to generate the page.
-  this.Data["User"] = user
-
-  accountUpdateForm := models.FormAccountUpdate{}
-
-  if err := this.ParseForm(&accountUpdateForm); err != nil {
-    beego.Debug("In ContentController:Post - Got err parsing the form", err)
-    flash.Error("Internal server error - Please try later or let us know that something whent wrong.")
-    flash.Store(&this.Controller)
-    return
+  input := &s3.PutObjectInput{
+      Body:                 aws.ReadSeekCloser(file),
+      Bucket:               aws.String("cf-templates-dej2znqywezl-ap-southeast-2"),
+      Key:                  aws.String("web-app/uploads/"+this.session["uid"].(string)+"/"+header.Filename),
   }
-
-  // After parsing save the form data to the controller to preserve
-  // the information. This will help the user in case of validation failure.
-  user = user.CopyUpdateForm(&accountUpdateForm)
-  this.Data["User"] = user
-
-  valid := validation.Validation{}
-
-  if v, _ := valid.Valid(&accountUpdateForm); !v {
-    beego.Debug("In ContentController:Post - Got form validation err")
-    this.Data["Errors"] = valid.ErrorsMap
-    return
-  }
-
-  //******** Compare submitted password with the saved hash
-  err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(accountUpdateForm.CurrentPassword))
-
+  result, err := svc.PutObject(input)
   if err != nil {
-    errormap := make(map[string]string)
-    errormap["Current"] = "The current password seems to be incorrect, please try again."
-    this.Data["Errors"] = errormap
-    flash.Error("The current password seems to be incorrect, please try again.")
-    flash.Store(&this.Controller)
-    return
+      if aerr, ok := err.(awserr.Error); ok {
+          switch aerr.Code() {
+          default:
+              fmt.Println(aerr.Error())
+              beego.Error("Content:Post - error uploading to s3: ", aerr.Error())
+          }
+      } else {
+          fmt.Println(err.Error())
+          beego.Error("Content:Post - error uploading to s3: ", aerr.Error())
+      }
+      this.Redirect("/accounts/content", 303)
   }
 
-  //******** Save user info to database
-  user = user.CopyUpdateForm(&accountUpdateForm)
+  fmt.Println(result)
 
-  _, err = o.Update(&user)
+  // o := orm.NewOrm()
+  // user := models.Account{Uid: this.session["uid"].(string)}
+  // file := models.File{}
+  // file.Filename = header.Filename
+  // file.Location = "location"
+  // file.Account = user
+  // _, err = o.Insert(&file)
+  //   if err != nil {
+  //   beego.Error("SignupController:Post - Got err inserting file to the database: ", err)
+  //   return
+  // }
 
-  if err != nil {
-
-    beego.Error("In ContentController:Post - Gor err updating user in database", err)
-    flash.Error("Internal server error - Please try later or let us know that something whent wrong.")
-    flash.Store(&this.Controller)
-    this.DelSession("session")
-    this.Redirect("/accounts/signin", 303)
-  }
-
-  flash.Notice("Profile updated")
-  flash.Store(&this.Controller)
-
-  //******** update session
-  m := make(map[string]interface{})
-
-  m["uid"] = user.Uid
-  m["firstname"] = accountUpdateForm.First
-  m["lastname"] = accountUpdateForm.Last
-  m["username"] = accountUpdateForm.Email
-
-  beego.Debug("In SigninController:Post - Creating new session")
-  this.SetSession("session", m)
-
-  this.session["username"] = accountUpdateForm.Email
-  this.session["first"] = accountUpdateForm.First
-
-  this.Data["User"] = user
   this.Redirect("/accounts/content", 303)
 
-}//end ProfileController:Post func
+}
