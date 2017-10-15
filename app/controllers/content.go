@@ -51,11 +51,13 @@ func (this *ContentController) Get() {
   file := models.File{}
   err = o.QueryTable("file").Filter("Account", user).RelatedSel().OrderBy("-Registration_date").One(&file)
   if err == nil {
-    fmt.Println(file.Location)
+    this.Data["File"] = file
 
   }else{
-    this.Data["File"] = file.Location
+    fmt.Println(err)
   }
+
+  // fmt.Println(this.Data["File"])
 
   this.Data["User"] = user
   this.Data["ProfileActive"] = true
