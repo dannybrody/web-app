@@ -7,19 +7,19 @@ os: linux
 # Specify "os: windows" if this revision targets Windows Server instances.
 # (You cannot specify both "os: linux" and "os: windows".)
 files:
-  # - source: main.go
-  #   destination: /home/ubuntu/gocode/src/app
-  # - source: /routers
-  #   destination: /home/ubuntu/gocode/src/app/routers
-  # - source: /tests
-  #   destination: /home/ubuntu/gocode/src/app/tests
-  # - source: /models
-  #   destination: /home/ubuntu/gocode/src/app/models
-  # - source: /controllers
-  #   destination: /home/ubuntu/gocode/src/app/controllers
-
-  - source: app
+  - source: main.go
     destination: /home/ubuntu/gocode/src/app
+  - source: /routers
+    destination: /home/ubuntu/gocode/src/app/routers
+  - source: /tests
+    destination: /home/ubuntu/gocode/src/app/tests
+  - source: /models
+    destination: /home/ubuntu/gocode/src/app/models
+  - source: /controllers
+    destination: /home/ubuntu/gocode/src/app/controllers
+
+  # - source: app
+  #   destination: /home/ubuntu/gocode/src/app
 
   - source: /conf
     destination: /home/ubuntu/gocode/src/app/conf
