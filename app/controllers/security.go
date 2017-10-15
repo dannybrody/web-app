@@ -18,7 +18,6 @@ type SecurityController struct {
 func (this *SecurityController) Get() {
   beego.Debug("In SecurityController:Get - Start")
   this.Data["SecurityActive"] = true
-  this.LayoutSections["Footer"] = "securitycontroller/footer.tpl"
 }
 
 
@@ -26,7 +25,6 @@ func (this *SecurityController) Post() {
 
   beego.Debug("In SecurityController:Post - Start")
 
-  this.LayoutSections["Footer"] = "securitycontroller/footer.tpl"
 
   o := orm.NewOrm()
   o.Using("write")

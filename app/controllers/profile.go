@@ -37,7 +37,6 @@ func (this *ProfileController) Get() {
 
   this.Data["User"] = user
   this.Data["ProfileActive"] = true
-  this.LayoutSections["Footer"] = "profilecontroller/footer.tpl"
 
 }//end ProfileController:Get() func
 
@@ -46,7 +45,7 @@ func (this *ProfileController) Post() {
   beego.Debug("In ProfileController:Post - Start")
 
   this.Data["ProfileActive"] = true
-  this.LayoutSections["Footer"] = "profilecontroller/footer.tpl"
+
 
   flash := beego.NewFlash()
 

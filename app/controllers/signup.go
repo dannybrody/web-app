@@ -19,7 +19,6 @@ type SignupController struct {
 func (this *SignupController) Get() {
 
   beego.Debug("In SignupController:Get - Start")
-  this.LayoutSections["Footer"] = "signupcontroller/footer.tpl"
 }
 
 
@@ -27,7 +26,6 @@ func (this *SignupController) Post() {
 
   beego.Debug("In SignupController:Post - Start")
 
-  this.LayoutSections["Footer"] = "signupcontroller/footer.tpl"
 
   flash := beego.NewFlash()
   signupform := models.FormAccountSignUp{}
