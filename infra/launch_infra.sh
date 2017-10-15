@@ -12,6 +12,8 @@ if [ $? -ne 0 ]; then
 fi
 
 source ./variables.sh
+# aws deploy list-deployments --application-name web-app --deployment-group-name web-app-App-AKAU849VK4QV-DeploymentGroup-165LJI000IZOB
+# exit
 
 #Make sure domain name exists before launching infra
 EXISTS=$(aws route53domains --region us-east-1 list-domains \
@@ -43,8 +45,9 @@ CERTIFICATE_ARN=$(aws acm list-certificates \
 echo "syncing templates to s3"
 for TEMPLATE in *.yaml; do
     [ -f "$TEMPLATE" ] || break
-    aws s3 cp $TEMPLATE s3://${TEMPLATE_S3_DIR}${TEMPLATE}
+    aws s3 cp $TEMPLATE s3://${S3_BUCKET}/${S3_PREFIX}/${TEMPLATE}
 done
+# exit
 #Create keypair if it doesnt exist
 EXISTS=$(aws ec2 describe-key-pairs --key-name $STACK)
 if [ $? -ne 0 ]; then
@@ -59,22 +62,24 @@ if [ $? -eq 0 ]; then
 	RESULT=$(aws cloudformation update-stack \
 		--stack-name $STACK \
 		--capabilities CAPABILITY_NAMED_IAM \
-		--template-url https://s3.amazonaws.com/${TEMPLATE_S3_DIR}master.yaml \
+		--template-url https://s3.amazonaws.com/${S3_BUCKET}/${S3_PREFIX}/master.yaml \
 		--parameters \
 			ParameterKey=DomainName,ParameterValue=${DOMAIN} \
 			ParameterKey=KeyName,ParameterValue=${STACK} \
 			ParameterKey=Certificate,ParameterValue=${CERTIFICATE_ARN} \
-			ParameterKey=S3Location,ParameterValue=${TEMPLATE_S3_DIR})
+			ParameterKey=S3Bucket,ParameterValue=${S3_BUCKET} \
+			ParameterKey=S3Prefix,ParameterValue=${S3_PREFIX})
 else
 	RESULT=$(aws cloudformation create-stack \
 		--stack-name $STACK \
 		--capabilities CAPABILITY_NAMED_IAM \
-		--template-url https://s3.amazonaws.com/${TEMPLATE_S3_DIR}master.yaml \
+		--template-url https://s3.amazonaws.com/${S3_BUCKET}/${S3_PREFIX}/master.yaml \
 		--parameters \
 			ParameterKey=DomainName,ParameterValue=${DOMAIN} \
 			ParameterKey=KeyName,ParameterValue=${STACK} \
 			ParameterKey=Certificate,ParameterValue=${CERTIFICATE_ARN} \
-			ParameterKey=S3Location,ParameterValue=${TEMPLATE_S3_DIR})
+			ParameterKey=S3Bucket,ParameterValue=${S3_BUCKET} \
+			ParameterKey=S3Prefix,ParameterValue=${S3_PREFIX})
 fi
 
 #Wait for result
@@ -94,13 +99,13 @@ done
 
 
 #Get jenkins initial password if it exists
-aws s3 cp s3://${TEMPLATE_S3_DIR}initialAdminPassword . >/dev/null 2>/dev/null
+aws s3 cp s3://${S3_BUCKET}/${S3_PREFIX}/initialAdminPassword . >/dev/null 2>/dev/null
 if [ $? -ne 0 ]; then
 	exit
 else
 	JENKINS_PW=$(cat initialAdminPassword)
 	rm initialAdminPassword
-	aws s3 rm s3://${TEMPLATE_S3_DIR}initialAdminPassword >/dev/null 2>/dev/null
+	aws s3 rm s3://${S3_BUCKET}/${S3_PREFIX}/initialAdminPassword >/dev/null 2>/dev/null
 	echo "visit https://jenkins.${DOMAIN} and enter $JENKINS_PW to configure and setup your jenkins machine"
 fi
 
