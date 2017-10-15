@@ -34,6 +34,7 @@ Resources:
             TemplateURL: https://s3.amazonaws.com/cf-templates-dej2znqywezl-ap-southeast-2/web-app/vpc.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
+                DomainName: !Ref DomainName
 
     SecurityGroups:
         Type: AWS::CloudFormation::Stack
@@ -98,3 +99,15 @@ Resources:
                 KeyName: !Ref KeyName
                 S3Bucket: !Ref S3Bucket
                 S3Prefix: !Ref S3Prefix
+
+    Redis:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://s3.amazonaws.com/cf-templates-dej2znqywezl-ap-southeast-2/web-app/redis.yaml
+            Parameters:
+                EnvironmentName: !Ref AWS::StackName
+                Subnets: !GetAtt VPC.Outputs.PrivateSubnets
+                CacheNodeType: cache.m4.large
+                SecurityGroup: !GetAtt SecurityGroups.Outputs.RedisSecurityGroup
+                Nodes: 1
+                DomainName: !Join [ ".", [ "vpc" , !Ref DomainName ] ]

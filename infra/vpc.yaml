@@ -35,6 +35,10 @@ Parameters:
         Type: String
         Default: 10.192.21.0/24
 
+    DomainName:
+        Description: Fully qualified domain name (FQDN) of your site
+        Type: String
+
 Resources:
 
     VPC: 
@@ -199,6 +203,14 @@ Resources:
             RouteTableId: !Ref PrivateRouteTable2
             SubnetId: !Ref PrivateSubnet2
 
+    VpcHostedZone:
+        Type: "AWS::Route53::HostedZone"
+        Properties: 
+            Name: !Join [ ".", [ 'vpc' , !Ref DomainName ]]
+            VPCs: 
+              - 
+                VPCId: !Ref VPC
+                VPCRegion: !Ref "AWS::Region"
 Outputs: 
 
     VPC: 
@@ -228,3 +240,7 @@ Outputs:
     PrivateSubnet2: 
         Description: A reference to the private subnet in the 2nd Availability Zone
         Value: !Ref PrivateSubnet2
+
+    VpcHostedZone:
+        Description: A reference to the Route53 hosted zone for the VPC
+        Value: !Ref VpcHostedZone

@@ -15,78 +15,92 @@ Parameters:
 
 Resources:
 
-    JenkinsELBSG:
-      Type: AWS::EC2::SecurityGroup
-      Properties: 
-        VpcId: !Ref VPC
-        GroupDescription: !Sub ${EnvironmentName}-Jenkins ELB Access
-        SecurityGroupIngress:
-          - CidrIp: 0.0.0.0/0
-            IpProtocol: tcp
-            FromPort: '443'
-            ToPort: '443'
-        Tags: 
-          - Key: Name
-            Value: !Sub ${EnvironmentName}-Jenkins-ELB
-
-    JenkinsSecurityGroup:
-      Type: "AWS::EC2::SecurityGroup"
-      Properties:
-        GroupDescription: Jenkins
-        SecurityGroupIngress:
-        - SourceSecurityGroupId: !Ref JenkinsELBSG
-          IpProtocol: tcp
-          FromPort: 8080
-          ToPort: 8080
+  JenkinsELBSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      VpcId: !Ref VPC
+      GroupDescription: !Sub ${EnvironmentName}-Jenkins ELB Access
+      SecurityGroupIngress:
         - CidrIp: 0.0.0.0/0
           IpProtocol: tcp
-          FromPort: '22'
-          ToPort: '22'
-        VpcId: !Ref VPC
-        Tags: 
-          - Key: Name
-            Value: !Sub ${EnvironmentName}-Jenkins
+          FromPort: '443'
+          ToPort: '443'
+      Tags: 
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-Jenkins-ELB
 
-    EFSIngressRule:
-      Type: AWS::EC2::SecurityGroupIngress
-      Properties:
-        FromPort: 2049
-        GroupId: !Sub ${JenkinsSecurityGroup}
+  JenkinsSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Jenkins
+      SecurityGroupIngress:
+      - SourceSecurityGroupId: !Ref JenkinsELBSG
         IpProtocol: tcp
-        SourceSecurityGroupId: !Sub ${JenkinsSecurityGroup}
-        ToPort: 2049
+        FromPort: 8080
+        ToPort: 8080
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+      VpcId: !Ref VPC
+      Tags: 
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-Jenkins
 
-    AppELBSG:
-      Type: AWS::EC2::SecurityGroup
-      Properties: 
-        VpcId: !Ref VPC
-        GroupDescription: !Sub ${EnvironmentName} ELB Access
-        SecurityGroupIngress:
-          - CidrIp: 0.0.0.0/0
-            IpProtocol: tcp
-            FromPort: '443'
-            ToPort: '443'
-        Tags: 
-          - Key: Name
-            Value: !Sub ${EnvironmentName}-ELB
+  EFSIngressRule:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      FromPort: 2049
+      GroupId: !Sub ${JenkinsSecurityGroup}
+      IpProtocol: tcp
+      SourceSecurityGroupId: !Sub ${JenkinsSecurityGroup}
+      ToPort: 2049
 
-    AppSecurityGroup:
-      Type: "AWS::EC2::SecurityGroup"
-      Properties:
-        GroupDescription: App
-        SecurityGroupIngress:
-        - SourceSecurityGroupId: !Ref AppELBSG
-          IpProtocol: tcp
-          FromPort: 8080
-          ToPort: 8080
+  AppELBSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      VpcId: !Ref VPC
+      GroupDescription: !Sub ${EnvironmentName} ELB Access
+      SecurityGroupIngress:
         - CidrIp: 0.0.0.0/0
           IpProtocol: tcp
-          FromPort: '22'
-          ToPort: '22'
-        VpcId: !Ref VPC
-        Tags: 
-          - Key: Name
-            Value: !Sub ${EnvironmentName}
+          FromPort: '443'
+          ToPort: '443'
+      Tags: 
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-ELB
+
+  AppSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: App
+      SecurityGroupIngress:
+      - SourceSecurityGroupId: !Ref AppELBSG
+        IpProtocol: tcp
+        FromPort: 8080
+        ToPort: 8080
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+      VpcId: !Ref VPC
+      Tags: 
+        - Key: Name
+          Value: !Sub ${EnvironmentName}
+
+  RedisSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: !Sub ${EnvironmentName} Redis Access
+      SecurityGroupIngress:
+      - SourceSecurityGroupId: !Ref AppSecurityGroup
+        IpProtocol: tcp
+        FromPort: 6379
+        ToPort: 6379
+      Tags: 
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-Redis
 
 Outputs:
 
@@ -105,3 +119,7 @@ Outputs:
     AppSecurityGroup:
       Description: A reference to the security group for App
       Value: !Ref AppSecurityGroup
+
+    RedisSecurityGroup:
+      Description: A reference to the security group for Redis
+      Value: !Ref RedisSecurityGroup

@@ -1,0 +1,71 @@
+Description: >
+    This template contains the security groups required by our entire stack.
+    We create them in a seperate nested template, so they can be referenced
+    by all of the other nested templates.
+
+Parameters:
+    
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+
+  Subnets:
+    Type: List<AWS::EC2::Subnet::Id>
+
+  CacheNodeType:
+    Description: Redis Node Type
+    Type: String
+
+  SecurityGroup:
+    Description: Redis security group for access
+    Type: String
+
+  Nodes:
+    Description: Number of nodes in Redis Cluster
+    Type: Number
+
+  DomainName:
+      Description: Domain name suffix
+      Type: String
+
+Resources:
+
+  CacheSubnetGroup:
+    Type: "AWS::ElastiCache::SubnetGroup"
+    Properties:
+      Description: !Sub ${EnvironmentName}-Redis-SubnetGroup
+      SubnetIds: !Ref Subnets
+
+  DefaultParametersGroup:
+    Type: "AWS::ElastiCache::ParameterGroup"
+    Properties:
+      CacheParameterGroupFamily: "redis2.8"
+      Description: "Modifications to support better performance"
+      Properties:
+        tcp-keepalive: 60
+        timeout: 900
+
+  Redis:
+    Type: "AWS::ElastiCache::CacheCluster"
+    Properties:
+      CacheNodeType: !Ref CacheNodeType
+      CacheParameterGroupName: !Ref DefaultParametersGroup
+      CacheSubnetGroupName: !Ref CacheSubnetGroup
+      ClusterName: !Sub ${EnvironmentName}-Redis
+      Engine: "redis"
+      EngineVersion: "2.8.21"
+      NumCacheNodes: !Ref Nodes
+      SnapshotRetentionLimit: 1
+      VpcSecurityGroupIds:
+        - !Ref SecurityGroup
+
+  myDNS:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneName: !Join [ ".", [ !Ref DomainName, "" ] ]
+      RecordSets:
+      - Name: !Join [ ".", [ "redis" , !Ref DomainName] ]
+        Type: CNAME
+        TTL: 300
+        ResourceRecords: 
+        - !GetAtt Redis.RedisEndpoint.Address
