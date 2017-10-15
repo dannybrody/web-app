@@ -7,7 +7,7 @@
         {{if .Errors.file}}<span class="help-block">{{.Errors.file}}</span>{{end}}
       </div>
 
-      {{.Data.File}}
+      {{.User.Files}}
       <div class="form-group">
         <div class="col-sm-offset-2 col-sm-8">
           <button type="submit" class="btn btn-primary" value="Update">Upload</button>

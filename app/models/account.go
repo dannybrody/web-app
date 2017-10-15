@@ -26,7 +26,7 @@ type File struct {
     Filename					   string
     Location					   string `orm:"unique"`
     Account  					   *Account  `orm:"rel(fk)"`
-    Registration_date              time.Time `orm:"auto_now_add;type(datetime)"`
+    Registration_date    time.Time `orm:"auto_now_add;type(datetime)"`
 }
 
 

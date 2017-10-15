@@ -40,13 +40,21 @@ func (this *ContentController) Get() {
   beego.Debug("In ContentController:Get - Reading user from the database")
 
   err := o.Read(&user)
-
   if err != nil {
     flash := beego.NewFlash()
     flash.Error("Internal server error - Please try later or let us know that something whent wrong.")
     flash.Store(&this.Controller)
     this.DelSession("session")
     this.Redirect("/accounts/signin", 303)
+  }
+
+  file := models.File{}
+  err = o.QueryTable("file").Filter("Account", user).RelatedSel().OrderBy("-Registration_date").One(&file)
+  if err == nil {
+    fmt.Println(file.Location)
+
+  }else{
+    this.Data["File"] = file.Location
   }
 
   this.Data["User"] = user
@@ -64,6 +72,7 @@ func (this *ContentController) Post() {
 
   key := "web-app/uploads/"+this.session["uid"].(string)+"/"+header.Filename
   input := &s3.PutObjectInput{
+      ACL:                  aws.String("public-read"),
       Body:                 aws.ReadSeekCloser(file),
       Bucket:               aws.String(bucket),
       Key:                  aws.String(key),
@@ -87,11 +96,11 @@ func (this *ContentController) Post() {
 
   o := orm.NewOrm()
   user := models.Account{Uid: this.session["uid"].(string)}
-  file := models.File{}
-  file.Filename = header.Filename
-  file.Location = "location"
-  file.Account = user
-  _, err = o.Insert(&file)
+  dbfile := models.File{}
+  dbfile.Filename = header.Filename
+  dbfile.Location = "https://s3-"+aws_region+".amazonaws.com/"+bucket+"/"+key
+  dbfile.Account = &user
+  _, err = o.Insert(&dbfile)
     if err != nil {
     beego.Error("SignupController:Post - Got err inserting file to the database: ", err)
     return
