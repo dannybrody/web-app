@@ -165,12 +165,6 @@
 			"revisionTime": "2017-08-25T22:14:26Z"
 		},
 		{
-			"checksumSHA1": "ClyNDKGVhQH1K/IXbLZ1qMv0ddA=",
-			"path": "github.com/twinj/uuid",
-			"revision": "7bbe408d339787c56ec15568c947c0959db1b275",
-			"revisionTime": "2016-09-09T07:54:38Z"
-		},
-		{
 			"checksumSHA1": "UWjVYmoHlIfHzVIskELHiJQtMOI=",
 			"path": "golang.org/x/crypto/bcrypt",
 			"revision": "9419663f5a44be8b34ca85f08abc5fe1be11f8a3",
