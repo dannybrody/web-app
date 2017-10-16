@@ -42,28 +42,28 @@ Parameters:
 
 Mappings:
   AWSRegionToAMI:
-    # us-east-1:
-    #   AMI: ami-6df8fe7a
-    # us-east-2:
-    #   AMI: ami-c6b5efa3
-    # us-west-1:
-    #   AMI: ami-1eda8d7e
-    # us-west-2:
-    #   AMI: ami-a2ca61c2
-    # eu-west-1:
-    #   AMI: ami-ba346ec9
-    # eu-west-2:
-    #   AMI: ami-42c5cf26
-    # eu-central-1:
-    #   AMI: ami-e012d48f
-    # ap-northeast-1:
-    #   AMI: ami-08f7956f
-    # ap-southeast-1:
-    #   AMI: ami-f4832f97
+    us-east-1:
+      AMI: ami-cd0f5cb6
+    us-east-2:
+      AMI: ami-10547475
+    us-west-1:
+      AMI: ami-09d2fb69
+    us-west-2:
+      AMI: ami-6e1a0117
+    eu-west-1:
+      AMI: ami-785db401
+    eu-west-2:
+      AMI: ami-996372fd
+    eu-central-1:
+      AMI: ami-1e339e71
+    ap-northeast-1:
+      AMI: ami-ea4eae8c
+    ap-southeast-1:
+      AMI: ami-6f198a0c
     ap-southeast-2:
       AMI: ami-e2021d81
-    # ca-central-1:
-    #   AMI: ami-be45f7da
+    ca-central-1:
+      AMI: ami-b3d965d7
 
 Resources:
 
