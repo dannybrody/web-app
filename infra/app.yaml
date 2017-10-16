@@ -1,0 +1,231 @@
+Description: >
+  This template deploys the Sample web app with code deploy integration with jenkins
+
+Parameters:
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+
+  InstanceType:
+    Type: String
+    Default: t2.large
+
+  ClusterSize:
+    Type: Number
+    Default: 1
+
+  Subnets:
+    Type: List<AWS::EC2::Subnet::Id>
+
+  LoadBalancerNames:
+    Description: The Application Load Balancer listener to register with
+    Type: String
+
+  VPC:
+    Type: AWS::EC2::VPC::Id
+
+  SecurityGroup: 
+    Description: Security group
+    Type: AWS::EC2::SecurityGroup::Id
+
+  KeyName:
+    Description: SSH Keyname
+    Type: String
+
+  S3Bucket:
+    Description: S3 bucket name
+    Type: String
+
+  S3Prefix:
+    Description: S3 prefix for code deploy
+    Type: String
+
+Mappings:
+  AWSRegionToAMI:
+    # us-east-1:
+    #   AMI: ami-6df8fe7a
+    # us-east-2:
+    #   AMI: ami-c6b5efa3
+    # us-west-1:
+    #   AMI: ami-1eda8d7e
+    # us-west-2:
+    #   AMI: ami-a2ca61c2
+    # eu-west-1:
+    #   AMI: ami-ba346ec9
+    # eu-west-2:
+    #   AMI: ami-42c5cf26
+    # eu-central-1:
+    #   AMI: ami-e012d48f
+    # ap-northeast-1:
+    #   AMI: ami-08f7956f
+    # ap-southeast-1:
+    #   AMI: ami-f4832f97
+    ap-southeast-2:
+      AMI: ami-e2021d81
+    # ca-central-1:
+    #   AMI: ami-be45f7da
+
+Resources:
+
+  DeploymentApplication:
+    Type: AWS::CodeDeploy::Application
+    Properties:
+      ApplicationName: !Sub ${EnvironmentName}
+
+  DeploymentGroup: 
+    Type: AWS::CodeDeploy::DeploymentGroup
+    Properties: 
+      ApplicationName: 
+        !Ref DeploymentApplication
+      AutoScalingGroups: 
+        - !Ref AutoScalingGroup
+      DeploymentConfigName: CodeDeployDefault.OneAtATime
+      ServiceRoleArn: 
+        !GetAtt [ CodeDeployTrustRole, Arn ]
+
+  CodeDeployTrustRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument: |
+        {
+          "Statement": [{
+            "Effect": "Allow",
+            "Principal": { "Service": [ "codedeploy.amazonaws.com" ]},
+            "Action": [ "sts:AssumeRole" ]
+          }]
+        }
+      RoleName: !Sub ${EnvironmentName}-CodeDeployTrust-Role
+      Policies: 
+        - PolicyName: !Sub ${EnvironmentName}-CodeDeploy-Policy
+          PolicyDocument: 
+            {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect" : "Allow",
+                  "Resource" : [ "*" ],
+                  "Action" : [ 
+                    "autoscaling:CompleteLifecycleAction",
+                    "autoscaling:DeleteLifecycleHook",
+                    "autoscaling:DescribeLifecycleHooks",
+                    "autoscaling:DescribeAutoScalingGroups",
+                    "autoscaling:PutLifecycleHook",
+                    "autoscaling:RecordLifecycleActionHeartbeat",
+                    "autoscaling:PutInstanceInStandby",
+                    "autoscaling:PutInstanceInService",
+                    "ec2:Describe*",
+                    "Tag:getResources", 
+                    "Tag:getTags", 
+                    "Tag:getTagsForResource", 
+                    "Tag:getTagsForResourceList"
+                  ]
+                }
+              ]
+            }
+
+  AppRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument: |
+        {
+          "Statement": [{
+            "Effect": "Allow",
+            "Principal": { "Service": [ "ec2.amazonaws.com" ]},
+            "Action": [ "sts:AssumeRole" ]
+          }]
+        }
+      Policies: 
+        - PolicyName: !Sub ${EnvironmentName}-App-Policy
+          PolicyDocument: 
+            {
+              "Version": "2012-10-17",
+              "Statement": [{
+                "Effect": "Allow",
+                "Action": [
+                  "autoscaling:Describe*", 
+                  "cloudformation:Describe*", 
+                  "cloudformation:GetTemplate", 
+                  "s3:Get*",
+                  "s3:List*",
+                  "s3:Put*"
+                ],
+                "Resource": "*"
+              }]
+            }
+      RoleName: !Sub ${EnvironmentName}-App-Role
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref AppRole
+
+  AutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    DependsOn: 
+      - LaunchConfiguration
+    Properties:
+      LoadBalancerNames : 
+       - !Ref LoadBalancerNames
+      VPCZoneIdentifier: !Ref Subnets
+      LaunchConfigurationName: !Ref LaunchConfiguration
+      MinSize: 1
+      MaxSize: 10
+      DesiredCapacity: !Ref ClusterSize
+      Tags: 
+        - Key: Name
+          Value: !Sub ${EnvironmentName}
+          PropagateAtLaunch: true
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT15M
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MinInstancesInService: 0
+        MaxBatchSize: 1
+        PauseTime: PT15M
+        WaitOnResourceSignals: true
+
+  LaunchConfiguration:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      ImageId: !FindInMap [ AWSRegionToAMI, !Ref "AWS::Region", AMI ]
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      IamInstanceProfile: !Ref InstanceProfile
+      SecurityGroups:
+        - !Ref SecurityGroup
+      UserData:
+        "Fn::Base64": !Sub |
+          #!/bin/bash -ex
+          ## Raise file descriptor limits
+          echo '* hard nofile 500000' | tee -a /etc/security/limits.conf
+          echo '* soft nofile 500000' | tee -a /etc/security/limits.conf
+          ulimit -n 500000
+          apt-get update -y
+          apt-get install -y python-setuptools ruby python-pip awscli
+
+          #####   INSTALL GOLANG  #####
+          curl -qO https://storage.googleapis.com/golang/go1.8.linux-amd64.tar.gz
+          tar -xvf go1.8.linux-amd64.tar.gz
+          sudo mv go /usr/local
+          sudo mv /usr/local/go/bin/* /usr/local/bin/
+          rm go1.8.linux-amd64.tar.gz
+
+          #####   INSTALL CODE DEPLOY AGENT  #####
+          wget https://aws-codedeploy-us-east-1.s3.amazonaws.com/latest/install
+          chmod +x ./install
+          ./install auto
+          rm install
+
+          #####   SIGNAL COMPLETE   #####
+          easy_install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz
+          /usr/local/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource AutoScalingGroup
+
+Outputs:
+  AutoScalingGroup:
+    Description: A reference to the AutoScalingGroup
+    Value: !Ref AutoScalingGroup
