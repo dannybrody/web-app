@@ -26,12 +26,22 @@ Parameters:
         Description: S3 prefix for code deploy
         Type: String
 
+    DBUser:
+        Description: Db user name
+        Type: String
+
+    DBPW:
+        Description: Db password
+        Type: String
+
+
+
 Resources:
 
     VPC:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/interview-web-application/resources/vpc.yaml
+            TemplateURL: https://s3.amazonaws.com/interview-web-app/resources/vpc.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 DomainName: !Ref DomainName
@@ -39,7 +49,7 @@ Resources:
     SecurityGroups:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/interview-web-application/resources/security-groups.yaml
+            TemplateURL: https://s3.amazonaws.com/interview-web-app/resources/security-groups.yaml
             Parameters: 
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -47,7 +57,7 @@ Resources:
     JenkinsELB:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/interview-web-application/resources/load-balancers.yaml
+            TemplateURL: https://s3.amazonaws.com/interview-web-app/resources/load-balancers.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 Subnets: !GetAtt VPC.Outputs.PublicSubnets
@@ -61,10 +71,10 @@ Resources:
     JenkinsCI:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/interview-web-application/resources/jenkins.yaml
+            TemplateURL: https://s3.amazonaws.com/interview-web-app/resources/jenkins.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
-                Subnets: !GetAtt VPC.Outputs.PublicSubnets
+                Subnets: !GetAtt VPC.Outputs.PrivateSubnets
                 VPC: !GetAtt VPC.Outputs.VPC
                 LoadBalancerNames: !GetAtt JenkinsELB.Outputs.LoadBalancer
                 JenkinsSecurityGroup: !GetAtt SecurityGroups.Outputs.JenkinsSecurityGroup
@@ -75,7 +85,7 @@ Resources:
     WebAppELB:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/interview-web-application/resources/load-balancers.yaml
+            TemplateURL: https://s3.amazonaws.com/interview-web-app/resources/load-balancers.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 Subnets: !GetAtt VPC.Outputs.PublicSubnets
@@ -89,7 +99,7 @@ Resources:
     App:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/interview-web-application/resources/app.yaml
+            TemplateURL: https://s3.amazonaws.com/interview-web-app/resources/app.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 Subnets: !GetAtt VPC.Outputs.PublicSubnets
@@ -103,7 +113,7 @@ Resources:
     Redis:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/interview-web-application/resources/redis.yaml
+            TemplateURL: https://s3.amazonaws.com/interview-web-app/resources/redis.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 Subnets: !GetAtt VPC.Outputs.PrivateSubnets
@@ -115,9 +125,12 @@ Resources:
     Database:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/interview-web-application/resources/database.yaml
+            TemplateURL: https://s3.amazonaws.com/interview-web-app/resources/database.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 Subnets: !GetAtt VPC.Outputs.PrivateSubnets
+                # subtest: subnet-4f9c8e15,subnet-6c14af08
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.DBSecurityGroup
                 DomainName: !Join [ ".", [ "vpc" , !Ref DomainName ] ]
+                DBUser: !Ref DBUser
+                DBPW: !Ref DBPW

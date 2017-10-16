@@ -1,0 +1,79 @@
+Description: >
+    This template Creates the Aurora Database.
+
+Parameters:
+    
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+
+  Subnets:
+    Type: List<AWS::EC2::Subnet::Id>
+    Default: subnet-4f9c8e15,subnet-6c14af08
+
+  SecurityGroup:
+    Description: Database security group for access
+    Type: List<AWS::EC2::SecurityGroup::Id>
+
+  DomainName:
+    Description: Domain name suffix
+    Type: String
+
+  DBUser:
+    Description: Db user name
+    Type: String
+
+  DBPW:
+    Description: Db password
+    Type: String
+
+Resources:
+
+  DatabaseCluster:
+      Type: AWS::RDS::DBCluster
+      Properties:
+          Engine: aurora
+          MasterUsername: !Ref DBUser
+          MasterUserPassword: !Ref DBPW
+          PreferredBackupWindow: 02:00-03:00
+          PreferredMaintenanceWindow: mon:03:00-mon:04:00
+          DBSubnetGroupName:
+            Ref: DatabaseSubnetGroup
+          VpcSecurityGroupIds: 
+            Ref: SecurityGroup
+
+  DatabaseSubnetGroup:
+      Type: AWS::RDS::DBSubnetGroup
+      Properties:
+          DBSubnetGroupDescription: !Sub ${EnvironmentName}-Database-SubnetGroup
+          SubnetIds: !Ref Subnets
+
+  DatabasePrimaryInstance:
+      Type: AWS::RDS::DBInstance
+      Properties:
+          Engine: aurora
+          DBClusterIdentifier:
+              Ref: DatabaseCluster
+          DBInstanceClass: db.r3.large
+          DBSubnetGroupName:
+              Ref: DatabaseSubnetGroup
+  DatabaseReplicaInstance:
+      Type: AWS::RDS::DBInstance
+      Properties:
+          Engine: aurora
+          DBClusterIdentifier:
+              Ref: DatabaseCluster
+          DBInstanceClass: db.r3.large
+          DBSubnetGroupName:
+              Ref: DatabaseSubnetGroup
+
+  myDNS:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneName: !Join [ ".", [ !Ref DomainName, "" ] ]
+      RecordSets:
+      - Name: !Join [ ".", [ "db" , !Ref DomainName] ]
+        Type: CNAME
+        TTL: 300
+        ResourceRecords: 
+        - !GetAtt DatabaseCluster.Endpoint.Address

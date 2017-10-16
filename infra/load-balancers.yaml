@@ -62,9 +62,6 @@ Resources:
                 - Key: Name
                   Value: !Ref EnvironmentName
             Listeners:
-                - LoadBalancerPort: 80
-                  InstancePort: !Ref InstancePort
-                  Protocol: HTTP
                 - InstancePort: !Ref InstancePort
                   SSLCertificateId: !Ref Certificate
                   LoadBalancerPort: 443
