@@ -12,8 +12,6 @@ if [ $? -ne 0 ]; then
 fi
 
 source ./variables.sh
-# aws deploy list-deployments --application-name web-app --deployment-group-name web-app-App-AKAU849VK4QV-DeploymentGroup-165LJI000IZOB
-# exit
 
 #Make sure domain name exists before launching infra
 EXISTS=$(aws route53domains --region us-east-1 list-domains \
@@ -40,7 +38,7 @@ fi
 CERTIFICATE_ARN=$(aws acm list-certificates \
 	--query "CertificateSummaryList[?DomainName==\`"*."$DOMAIN\`].CertificateArn" \
 	--output text)
-
+	
 #Sync all templates to s3 for provisioning
 echo "syncing templates to s3"
 for TEMPLATE in *.yaml; do
@@ -68,7 +66,9 @@ if [ $? -eq 0 ]; then
 			ParameterKey=KeyName,ParameterValue=${STACK} \
 			ParameterKey=Certificate,ParameterValue=${CERTIFICATE_ARN} \
 			ParameterKey=S3Bucket,ParameterValue=${S3_BUCKET} \
-			ParameterKey=S3Prefix,ParameterValue=${S3_PREFIX})
+			ParameterKey=S3Prefix,ParameterValue=${S3_PREFIX} \
+			ParameterKey=DBUser,ParameterValue=${DB_USER} \
+			ParameterKey=DBPW,ParameterValue=${DB_PASSWORD})
 else
 	RESULT=$(aws cloudformation create-stack \
 		--stack-name $STACK \
@@ -79,7 +79,9 @@ else
 			ParameterKey=KeyName,ParameterValue=${STACK} \
 			ParameterKey=Certificate,ParameterValue=${CERTIFICATE_ARN} \
 			ParameterKey=S3Bucket,ParameterValue=${S3_BUCKET} \
-			ParameterKey=S3Prefix,ParameterValue=${S3_PREFIX})
+			ParameterKey=S3Prefix,ParameterValue=${S3_PREFIX} \
+			ParameterKey=DBUser,ParameterValue=${DB_USER} \
+			ParameterKey=DBPW,ParameterValue=${DB_PASSWORD})
 fi
 
 #Wait for result

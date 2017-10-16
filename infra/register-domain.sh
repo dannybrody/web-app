@@ -24,6 +24,6 @@ if [ "$EXISTS" != "$DOMAIN" ];then
 			--query 'OperationId' \
 			--output text)
 		echo $OPERATION_ID
-		echo "Check email $EMAIL to verify domain registration"
+		echo "Check email $Email to verify domain registration"
 	fi
 fi
