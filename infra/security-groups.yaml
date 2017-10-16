@@ -102,6 +102,20 @@ Resources:
         - Key: Name
           Value: !Sub ${EnvironmentName}-Redis
 
+  DBSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: !Sub ${EnvironmentName} DB Access
+      SecurityGroupIngress:
+      - SourceSecurityGroupId: !Ref AppSecurityGroup
+        IpProtocol: tcp
+        FromPort: 3306
+        ToPort: 3306
+      Tags: 
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-DB
+
 Outputs:
 
     JenkinsELBSG:
@@ -123,3 +137,7 @@ Outputs:
     RedisSecurityGroup:
       Description: A reference to the security group for Redis
       Value: !Ref RedisSecurityGroup
+
+    DBSecurityGroup:
+      Description: A reference to the security group for Redis
+      Value: !Ref DBSecurityGroup

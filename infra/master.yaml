@@ -31,7 +31,7 @@ Resources:
     VPC:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/cf-templates-dej2znqywezl-ap-southeast-2/web-app/vpc.yaml
+            TemplateURL: https://s3.amazonaws.com/interview-web-application/resources/vpc.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 DomainName: !Ref DomainName
@@ -39,7 +39,7 @@ Resources:
     SecurityGroups:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/cf-templates-dej2znqywezl-ap-southeast-2/web-app/security-groups.yaml
+            TemplateURL: https://s3.amazonaws.com/interview-web-application/resources/security-groups.yaml
             Parameters: 
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -47,7 +47,7 @@ Resources:
     JenkinsELB:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/cf-templates-dej2znqywezl-ap-southeast-2/web-app/load-balancers.yaml
+            TemplateURL: https://s3.amazonaws.com/interview-web-application/resources/load-balancers.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 Subnets: !GetAtt VPC.Outputs.PublicSubnets
@@ -61,7 +61,7 @@ Resources:
     JenkinsCI:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/cf-templates-dej2znqywezl-ap-southeast-2/web-app/jenkins.yaml
+            TemplateURL: https://s3.amazonaws.com/interview-web-application/resources/jenkins.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 Subnets: !GetAtt VPC.Outputs.PublicSubnets
@@ -75,7 +75,7 @@ Resources:
     WebAppELB:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/cf-templates-dej2znqywezl-ap-southeast-2/web-app/load-balancers.yaml
+            TemplateURL: https://s3.amazonaws.com/interview-web-application/resources/load-balancers.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 Subnets: !GetAtt VPC.Outputs.PublicSubnets
@@ -89,7 +89,7 @@ Resources:
     App:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/cf-templates-dej2znqywezl-ap-southeast-2/web-app/app.yaml
+            TemplateURL: https://s3.amazonaws.com/interview-web-application/resources/app.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 Subnets: !GetAtt VPC.Outputs.PublicSubnets
@@ -103,11 +103,21 @@ Resources:
     Redis:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/cf-templates-dej2znqywezl-ap-southeast-2/web-app/redis.yaml
+            TemplateURL: https://s3.amazonaws.com/interview-web-application/resources/redis.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 Subnets: !GetAtt VPC.Outputs.PrivateSubnets
                 CacheNodeType: cache.m4.large
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.RedisSecurityGroup
                 Nodes: 1
+                DomainName: !Join [ ".", [ "vpc" , !Ref DomainName ] ]
+
+    Database:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://s3.amazonaws.com/interview-web-application/resources/database.yaml
+            Parameters:
+                EnvironmentName: !Ref AWS::StackName
+                Subnets: !GetAtt VPC.Outputs.PrivateSubnets
+                SecurityGroup: !GetAtt SecurityGroups.Outputs.DBSecurityGroup
                 DomainName: !Join [ ".", [ "vpc" , !Ref DomainName ] ]
