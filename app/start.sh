@@ -2,7 +2,7 @@
 sudo chown -R ubuntu:ubuntu /home/ubuntu/
 cd /home/ubuntu/gocode/src/app/
 rm -r vendor
-go env
+# go env
 # go get github.com/astaxie/beego
 # go get
 # go build
