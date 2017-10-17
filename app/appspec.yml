@@ -34,3 +34,7 @@ files:
   - source: /stop.sh
     destination: /home/ubuntu/gocode/src/app
 hooks:
+  ApplicationStart:
+    - location: deployment/start.sh
+      timeout: 30
+      runas: ubuntu
