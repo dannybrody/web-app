@@ -35,6 +35,6 @@ files:
     destination: /home/ubuntu/gocode/src/app
 hooks:
   ApplicationStart:
-    - location: deployment/start.sh
+    - location: /home/ubuntu/gocode/src/app/start.sh
       timeout: 30
       runas: ubuntu
