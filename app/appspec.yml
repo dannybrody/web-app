@@ -30,7 +30,7 @@ files:
   - source: /views
     destination: /home/ubuntu/gocode/src/app/views
   - source: /start.sh
-      destination: /home/ubuntu/gocode/src/app/start.sh
+    destination: /home/ubuntu/gocode/src/app/start.sh
   - source: /stop.sh
-      destination: /home/ubuntu/gocode/src/app/stop.sh
+    destination: /home/ubuntu/gocode/src/app/stop.sh
 hooks:
