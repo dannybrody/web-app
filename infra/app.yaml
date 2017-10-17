@@ -212,7 +212,10 @@ Resources:
           curl -qO https://storage.googleapis.com/golang/go1.8.linux-amd64.tar.gz
           tar -xvf go1.8.linux-amd64.tar.gz
           sudo mv go /usr/local
-          sudo mv /usr/local/go/bin/* /usr/local/bin/
+          echo 'PATH=$PATH:/usr/local/go/bin' >> /home/ubuntu/.bashrc
+          echo 'GOPATH=/home/ubuntu/gocode' >> /home/ubuntu/.bashrc
+          echo 'PATH=$PATH:$GOPATH/bin' >> /home/ubuntu/.bashrc
+
           rm go1.8.linux-amd64.tar.gz
 
           #####   INSTALL CODE DEPLOY AGENT  #####
