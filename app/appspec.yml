@@ -29,8 +29,8 @@ files:
   #   destination: /home/ubuntu/gocode/src/app/vendor
   - source: /views
     destination: /home/ubuntu/gocode/src/app/views
-- source: /start.sh
-    destination: /home/ubuntu/gocode/src/app/start.sh
-- source: /stop.sh
-    destination: /home/ubuntu/gocode/src/app/stop.sh
+  - source: /start.sh
+      destination: /home/ubuntu/gocode/src/app/start.sh
+  - source: /stop.sh
+      destination: /home/ubuntu/gocode/src/app/stop.sh
 hooks:
