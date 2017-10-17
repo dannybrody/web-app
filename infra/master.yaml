@@ -94,7 +94,7 @@ Resources:
                 DomainName: !Ref DomainName
                 SubDomainName: app
                 InstancePort: 8080
-                HealthPath: swagger/
+                HealthPath: ""
 
     App:
         Type: AWS::CloudFormation::Stack
