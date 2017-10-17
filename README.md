@@ -5,7 +5,7 @@ This project covers provisioning all infra for AWS for a highly available web ap
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+These instructions will get you a copy of the project up and running on AWS. See deployment.
 
 ### Prerequisites
 
@@ -36,7 +36,7 @@ Once you see the domain active in AWS proceed to launch the infra
 ```
 ./infra/launch-infra.sh
 ```
-During this process you will receive another email from amazon about verifying your SSL certficate.  You must open and click 'i agree'. 
+During this process you will receive another email from amazon about verifying your SSL certficate.  You must open and click 'I agree'. 
 
 Next you can start setting up Jenkins
 ```
